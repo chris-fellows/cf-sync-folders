@@ -1,0 +1,29 @@
+<html>
+	<head>
+		<link REL="StyleSheet" TYPE="text/css" HREF="../Default.css"/> 
+	</head>
+	<body>
+	<h2>CFSyncFolders</h2>
+	Synchronizes a number of source folders to a corresponding destination folder. This allows you to configure particular Windows folders to be automatically backed up to an external hard drive. For example, Documents, Music, Pictures, Videos, other custom folders.<br/><br/>
+        Supports the number of destination types:
+        <ul>
+            <li>Local file system, removable drive or network drive.</li>
+            <li>Dropbox (In progress)</li>
+            <li>Microsoft One Drive (In progress)</li>
+            <li>Google Drive (In progress)</li>
+        </ul>
+		Features:
+		<ul>
+			<li>Destination folder path supports placeholders that can be set at runtime. Supported placeholders include current year number, month number, day number, user name, machine name. The date placeholders would be used where it was necessary to have separate backups based on the date. For example, If you wanted to retain separate backups for previous months then you would specify the month number placeholder in the destination folder path.</li>
+			<li>Destination folder path supports the ability to specify the volume label for the destination drive instead of indicating a specific driver letter. It allows the system to back up to removable drives that may be assigned a different drive letter each time that they are connected.</li>
+		</ul>
+		The application can be run in any of the following ways:
+		<ol>
+			<li>Interactively. The application will only synchronize when the user requests it.</li>
+			<li>In the background from the Task Tray (bottom right near the clock) and periodically synchronize.</li>
+			<li>Silently from the command line. For example, From the Windows Scheduler.</li>
+		</ol>
+	<br/>
+	<a href="../Index.htm#ACFSyncFolders">Back to Index</a>
+	</body>
+</html>
