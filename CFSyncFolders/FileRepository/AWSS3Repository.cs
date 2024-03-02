@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -53,17 +54,17 @@ namespace CFSyncFolders.FileRepository
 
         public void DeleteFile(string filePath)
         {
-
+            throw new NotImplementedException();
         }
 
         public void DeleteFolder(string folder)
         {
-
+            throw new NotImplementedException();
         }
 
         public void WriteFile(string srcFilePath, string dstFilePath, bool copyProperties)
         {
-
+            throw new NotImplementedException();
         }
 
         public string PathCombine(string folder, string file)
@@ -83,7 +84,7 @@ namespace CFSyncFolders.FileRepository
 
         public void CreateFolder(string folder)
         {
-
+            throw new NotImplementedException();
         }
     }
 }

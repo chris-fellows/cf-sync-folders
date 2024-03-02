@@ -37,7 +37,7 @@
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsbSave = new System.Windows.Forms.ToolStripButton();
             this.tsbAddFolder = new System.Windows.Forms.ToolStripButton();
-            this.tsbRemoveFolder = new System.Windows.Forms.ToolStripButton();
+            this.tsbCancel = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFolder)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -52,9 +52,11 @@
             this.dgvFolder.Location = new System.Drawing.Point(12, 87);
             this.dgvFolder.MultiSelect = false;
             this.dgvFolder.Name = "dgvFolder";
+            this.dgvFolder.ReadOnly = true;
             this.dgvFolder.RowHeadersVisible = false;
             this.dgvFolder.Size = new System.Drawing.Size(913, 359);
             this.dgvFolder.TabIndex = 9;
+            this.dgvFolder.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 
             // txtVerificationFile
             // 
@@ -92,8 +94,8 @@
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsbSave,
-            this.tsbAddFolder,
-            this.tsbRemoveFolder});
+            this.tsbCancel,
+            this.tsbAddFolder});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(937, 25);
@@ -118,14 +120,14 @@
             this.tsbAddFolder.Text = "Add Folder";
             this.tsbAddFolder.Click += new System.EventHandler(this.tsbAddFolder_Click);
             // 
-            // tsbRemoveFolder
+            // tsbCancel
             // 
-            this.tsbRemoveFolder.Image = ((System.Drawing.Image)(resources.GetObject("tsbRemoveFolder.Image")));
-            this.tsbRemoveFolder.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbRemoveFolder.Name = "tsbRemoveFolder";
-            this.tsbRemoveFolder.Size = new System.Drawing.Size(106, 22);
-            this.tsbRemoveFolder.Text = "Remove Folder";
-            this.tsbRemoveFolder.Click += new System.EventHandler(this.tsbRemoveFolder_Click);
+            this.tsbCancel.Image = ((System.Drawing.Image)(resources.GetObject("tsbCancel.Image")));
+            this.tsbCancel.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbCancel.Name = "tsbCancel";
+            this.tsbCancel.Size = new System.Drawing.Size(63, 22);
+            this.tsbCancel.Text = "Cancel";
+            this.tsbCancel.Click += new System.EventHandler(this.tsbCancel_Click);
             // 
             // SyncConfigurationForm
             // 
@@ -162,6 +164,6 @@
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton tsbSave;
         private System.Windows.Forms.ToolStripButton tsbAddFolder;
-        private System.Windows.Forms.ToolStripButton tsbRemoveFolder;
+        private System.Windows.Forms.ToolStripButton tsbCancel;
     }
 }

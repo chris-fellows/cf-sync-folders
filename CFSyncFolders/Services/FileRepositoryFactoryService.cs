@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace CFSyncFolders
+﻿namespace CFSyncFolders
 {
     /// <summary>
     /// Factory for IFileRepository instances
     /// </summary>
-    internal class FileRepositoryFactory
+    internal class FileRepositoryFactoryService
     {
         public static IFileRepository GetFolder2FileRepository()
         {
@@ -21,7 +16,7 @@ namespace CFSyncFolders
         }
 
         private static IFileRepository GetFileRepository(string className)
-        {
+        {            
             switch (className)
             {
                 case "GoogleDriveRepository": return new GoogleDriveRepository();

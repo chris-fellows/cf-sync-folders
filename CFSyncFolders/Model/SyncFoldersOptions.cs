@@ -10,7 +10,7 @@ namespace CFSyncFolders
     /// Options for sync'ing a pair of folders
     /// </summary>
     [XmlType("SyncFolderOptions")]
-    public class SyncFoldersOptions
+    public class SyncFoldersOptions : ICloneable
     {
         /// <summary>
         /// Unique ID
@@ -101,6 +101,27 @@ namespace CFSyncFolders
             {                
                 return (this.Enabled && this.TimeLastCompleted.AddSeconds(this.FrequencySeconds) < DateTime.UtcNow);                
             }
-        }                    
+        }
+
+        public object Clone()
+        {
+            var copy = new SyncFoldersOptions()
+            {
+                Enabled = Enabled,
+                ExcludeFileExtensionList = ExcludeFileExtensionList,
+                Folder1 = Folder1,
+                Folder1Resolved = Folder1Resolved,
+                Folder2 = Folder2,
+                Folder2Resolved = Folder2Resolved,
+                FrequencySeconds = FrequencySeconds, 
+                ID = ID,
+                IncludeFileExtensionList = IncludeFileExtensionList,
+                KeepDeletedItems = KeepDeletedItems,
+                KeepFileProperties = KeepFileProperties,
+                TimeLastCompleted = TimeLastCompleted,
+                TimeLastStarted = TimeLastStarted
+            };
+            return copy;
+        }
     }
 }

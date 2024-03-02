@@ -1,13 +1,14 @@
-﻿using System;
+﻿using CFUtilities;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace CFSyncFolders
 {
-    public class LogFile : ILog
+    /// <summary>
+    ///  CSV log file
+    /// </summary>
+    public class CSVLogFile : ILog
     {
         private class LogEntry
         {
@@ -30,14 +31,14 @@ namespace CFSyncFolders
         private List<LogEntry> _logEntries = new List<LogEntry>();
         private DateTime _lastFlush = DateTime.MinValue;
 
-        public LogFile(string logFile)
+        public CSVLogFile(string logFile)
         {
             _logFile = logFile;            
         }
 
-        private string GetLogFile()
+        private string GetLogFile(DateTime dateTime)
         {
-            string logFile = _logFile.Replace("{date}", string.Format("{0}-{1}", DateTime.Now.Month, DateTime.Now.Year))
+            string logFile = _logFile.Replace("{date}", string.Format("{0}-{1}", dateTime.Month, dateTime.Year))
                         .Replace("{user}", Environment.UserName)
                         .Replace("{machine}", Environment.MachineName);
             return logFile;  
@@ -68,7 +69,7 @@ namespace CFSyncFolders
 
             if (!String.IsNullOrEmpty(_logFile))
             {
-                string logFile = GetLogFile();
+                string logFile = GetLogFile(DateTime.Now);
 
                 string folder = Path.GetDirectoryName(logFile);
                 if (!Directory.Exists(folder))
@@ -102,7 +103,7 @@ namespace CFSyncFolders
                     }
                     catch (System.Exception exception)
                     {
-                        if (exception.Message.Contains("another process") && DateTime.UtcNow < timeout)   // Locked by another process
+                        if (IOUtilities.IsFileInUseByAnotherProcess(exception) && DateTime.UtcNow < timeout)   // Locked by another process
                         {
                             System.Threading.Thread.Sleep(200);    // Wait before retry
                         }
@@ -155,6 +156,11 @@ namespace CFSyncFolders
 
                 FlushLogIfRequired();
             }
+        }
+
+        public void DeleteBefore(DateTimeOffset beforeDate)
+        {            
+           
         }
     }
 }

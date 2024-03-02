@@ -51,18 +51,18 @@ namespace CFSyncFolders
         }
 
         public void DeleteFile(string filePath)
-        { 
-        
+        {
+            throw new NotImplementedException();
         }
 
         public void DeleteFolder(string folder)
         {
-          
+            throw new NotImplementedException();
         }
 
         public void WriteFile(string srcFilePath, string dstFilePath, bool copyProperties)
         {
-           
+            throw new NotImplementedException();
         }
 
         public string PathCombine(string folder, string file)
@@ -82,7 +82,7 @@ namespace CFSyncFolders
 
         public void CreateFolder(string folder)
         {
-         
+            throw new NotImplementedException();
         }
     }
 }

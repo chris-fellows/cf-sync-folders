@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.tssFolders = new System.Windows.Forms.ToolStripStatusLabel();
             this.niNotify = new System.Windows.Forms.NotifyIcon(this.components);
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
@@ -44,7 +45,6 @@
             this.dgvFolders = new System.Windows.Forms.DataGridView();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.lstMessage = new System.Windows.Forms.ListBox();
-            this.tssFolders = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -57,11 +57,17 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tssFolders});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 464);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 518);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(929, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(988, 22);
             this.statusStrip1.TabIndex = 7;
             this.statusStrip1.Text = "statusStrip1";
+            // 
+            // tssFolders
+            // 
+            this.tssFolders.Name = "tssFolders";
+            this.tssFolders.Size = new System.Drawing.Size(39, 17);
+            this.tssFolders.Text = "Ready";
             // 
             // niNotify
             // 
@@ -76,12 +82,12 @@
             this.toolStripLabel1,
             this.tscbConfiguration,
             this.tsbSync,
-            this.tsbViewLog,
             this.tsbAddConfig,
-            this.tsbEditConfig});
+            this.tsbEditConfig,
+            this.tsbViewLog});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(929, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(988, 25);
             this.toolStrip1.TabIndex = 9;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -95,7 +101,7 @@
             // 
             this.tscbConfiguration.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.tscbConfiguration.Name = "tscbConfiguration";
-            this.tscbConfiguration.Size = new System.Drawing.Size(240, 25);
+            this.tscbConfiguration.Size = new System.Drawing.Size(260, 25);
             this.tscbConfiguration.SelectedIndexChanged += new System.EventHandler(this.tscbConfiguration_SelectedIndexChanged);
             // 
             // tsbSync
@@ -142,7 +148,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 25);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(929, 439);
+            this.tabControl1.Size = new System.Drawing.Size(988, 493);
             this.tabControl1.TabIndex = 11;
             // 
             // tabPage1
@@ -151,7 +157,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(921, 413);
+            this.tabPage1.Size = new System.Drawing.Size(980, 467);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Status";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -166,7 +172,7 @@
             this.dgvFolders.Name = "dgvFolders";
             this.dgvFolders.ReadOnly = true;
             this.dgvFolders.RowHeadersVisible = false;
-            this.dgvFolders.Size = new System.Drawing.Size(915, 407);
+            this.dgvFolders.Size = new System.Drawing.Size(974, 461);
             this.dgvFolders.TabIndex = 11;
             // 
             // tabPage2
@@ -189,17 +195,11 @@
             this.lstMessage.Size = new System.Drawing.Size(915, 407);
             this.lstMessage.TabIndex = 0;
             // 
-            // tssFolders
-            // 
-            this.tssFolders.Name = "tssFolders";
-            this.tssFolders.Size = new System.Drawing.Size(39, 17);
-            this.tssFolders.Text = "Ready";
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(929, 486);
+            this.ClientSize = new System.Drawing.Size(988, 540);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.statusStrip1);

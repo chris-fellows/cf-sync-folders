@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -11,7 +12,7 @@ namespace CFSyncFolders
     /// Sync configuration
     /// </summary>
     [XmlType("SyncConfiguration")]
-    public class SyncConfiguration
+    public class SyncConfiguration : ICloneable
     {
         [XmlAttribute("ID")]
         public Guid ID { get; set; }
@@ -29,6 +30,18 @@ namespace CFSyncFolders
         [XmlArray("FoldersOptions")]
         [XmlArrayItem("FolderOptions")]
         public List<SyncFoldersOptions> FoldersOptions = new List<SyncFoldersOptions>();
+
+        public object Clone()
+        {
+            var copy = new SyncConfiguration()
+            {
+                ID = ID,
+                Description = Description,
+                VerificationFile = VerificationFile,
+                FoldersOptions = FoldersOptions == null ? null : FoldersOptions.Select(fo => (SyncFoldersOptions)fo.Clone()).ToList()        
+            };
+            return copy;
+        }
 
         /// <summary>
         /// Returns folders that need a sync, either overdue or being forced to sync
@@ -57,7 +70,7 @@ namespace CFSyncFolders
             // Find verification file across all drives, not necessary if UNC path is specified  
             if (!String.IsNullOrEmpty(this.VerificationFile) && !this.VerificationFile.StartsWith("\\"))
             {
-                string verificationFileDrive = SyncManager.GetVerificationFileDrive(this.VerificationFile);
+                string verificationFileDrive = SyncFolderService.GetVerificationFileDrive(this.VerificationFile);
                 if (String.IsNullOrEmpty(verificationFileDrive))  // Can't determine verification file drive, possibly removable drive not connected
                 {
                     isVerificationDriveMissing = true;
@@ -88,8 +101,8 @@ namespace CFSyncFolders
                 }
                 else
                 {
-                    syncFoldersOptions.Folder1Resolved = SyncManager.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder1, date, verificationFile);
-                    syncFoldersOptions.Folder2Resolved = SyncManager.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder2, date, verificationFile);
+                    syncFoldersOptions.Folder1Resolved = SyncFolderService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder1, date, verificationFile);
+                    syncFoldersOptions.Folder2Resolved = SyncFolderService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder2, date, verificationFile);
                 }
             }
         }

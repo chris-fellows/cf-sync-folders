@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using CFUtilities.Repository;
 
@@ -13,7 +11,7 @@ namespace CFSyncFolders
     /// Performs one-way sync'ing of a source folder to a destination folder. The destination folder is made to look identical
     /// to the source folder.
     /// </summary>
-    internal class SyncManager
+    internal class SyncFolderService
     {
         public enum ProgressTypes : byte
         {
@@ -22,13 +20,13 @@ namespace CFSyncFolders
             Periodic = 2
         }
 
-
         private bool _cancelled = false;    
         private ILog _log;
         private IItemRepository _syncConfigurationRepository;
         private DateTime _lastProgressEvent = DateTime.UtcNow;
         private DateTime _lastStatusEvent = DateTime.UtcNow;
         private DateTime _lastPeriodicProgressEvent = DateTime.UtcNow;
+        private DateTime _lastPause = DateTime.UtcNow;
 
         public delegate void DisplayStatus(string status);
         public event DisplayStatus OnDisplayStatus;
@@ -40,26 +38,24 @@ namespace CFSyncFolders
                                 FolderStatistics folderStatistics, int folderLevel);
         public event SyncFolderProgress OnSyncFolderProgress;
         
-        public SyncManager(ILog log, string configurationFolder)
+        public SyncFolderService(ILog log, string configurationFolder)
         {            
             _log = log;
-            _syncConfigurationRepository = new CFUtilities.XML.XmlItemRepository(configurationFolder);     
-            
-            // Reindex SysConfiguration repository
-            /*
-            Func<SyncConfiguration, string> getIdFunction = delegate (SyncConfiguration syncConfiguration)
-            {
-                return syncConfiguration.ID.ToString();
-            };
-            _syncConfigurationRepository.Reindex<SyncConfiguration>(getIdFunction);
-            */            
-
-            // As a one-off then convert Web.config configuration to XML configuration
-            //if (!_syncConfigurationRepository.GetAll<SyncConfiguration>().Any())
-            //{
-            //    CreateAndSave();
-            //}
+            _syncConfigurationRepository = new CFUtilities.XML.XmlItemRepository(configurationFolder);              
         }      
+
+        /// <summary>
+        /// Periodically pause if necessary, avoid high CPU
+        /// </summary>
+        private void PauseIfRequired(bool force)
+        {
+            var now = DateTime.UtcNow;
+            if (force || _lastPause.AddMilliseconds(200) <= now)
+            {
+                System.Threading.Thread.Sleep(1);
+                _lastPause = now;
+            }
+        }
         
         public bool Cancelled
         {
@@ -71,7 +67,7 @@ namespace CFSyncFolders
         {
             if (OnDisplayStatus != null)
             {
-                TimeSpan frequency = TimeSpan.FromMilliseconds(500);
+                var frequency = TimeSpan.FromMilliseconds(500);
                 if (force || _lastStatusEvent.Add(frequency) <= DateTime.UtcNow)
                 {
                     _lastStatusEvent = DateTime.UtcNow;
@@ -92,7 +88,7 @@ namespace CFSyncFolders
         /// <returns></returns>
         public static string ReplacePlaceholdersInFolder(string input, DateTime date, string verificationFile)
         {
-            string output = input.Replace("{date}", date.ToString("yyyy-MM-dd"));
+            var output = input.Replace("{date}", date.ToString("yyyy-MM-dd"));
             output = output.Replace("{month}", date.Month.ToString());
             output = output.Replace("{day}", date.Day.ToString());
             output = output.Replace("{year}", date.Year.ToString());     
@@ -147,9 +143,9 @@ namespace CFSyncFolders
         {
             if (!String.IsNullOrEmpty(verificationFile) && !verificationFile.StartsWith("//"))
             {
-                List<string> drivesFound = new List<string>();
+                var drivesFound = new List<string>();
 
-                DriveInfo[] driveInfoList = System.IO.DriveInfo.GetDrives();
+                var driveInfoList = System.IO.DriveInfo.GetDrives();
                 foreach (DriveInfo driveInfo in driveInfoList)
                 {
                     // Determine if we check this drive
@@ -185,22 +181,22 @@ namespace CFSyncFolders
             return null;
         }
 
-        /// <summary>
-        /// Creates SyncConfiguration in new format (XML file) from old format (Web.config settings)
-        /// </summary>
-        /// <returns></returns>
-        private SyncConfiguration CreateAndSave()
-        {
-            SyncConfiguration syncConfiguration = new SyncConfiguration()
-            {
-                ID = Guid.NewGuid(),                
-                Description = "Default",
-                FoldersOptions = LoadSyncFoldersOptionsList()
-            };
-            _syncConfigurationRepository.Insert<SyncConfiguration>(syncConfiguration.ID.ToString(), syncConfiguration);
+        ///// <summary>
+        ///// Creates SyncConfiguration in new format (XML file) from old format (Web.config settings)
+        ///// </summary>
+        ///// <returns></returns>
+        //private SyncConfiguration CreateAndSave()
+        //{
+        //    SyncConfiguration syncConfiguration = new SyncConfiguration()
+        //    {
+        //        ID = Guid.NewGuid(),                
+        //        Description = "Default",
+        //        FoldersOptions = LoadSyncFoldersOptionsList()
+        //    };
+        //    _syncConfigurationRepository.Insert<SyncConfiguration>(syncConfiguration.ID.ToString(), syncConfiguration);
 
-            return syncConfiguration;
-        }
+        //    return syncConfiguration;
+        //}
 
         /// <summary>
         /// Returns named configuration
@@ -234,7 +230,7 @@ namespace CFSyncFolders
 
         private List<SyncFoldersOptions> LoadSyncFoldersOptionsList()
         {
-            List<SyncFoldersOptions> optionsList = new List<SyncFoldersOptions>();
+            var optionsList = new List<SyncFoldersOptions>();
             int count = 0;
             while (true)
             {
@@ -271,7 +267,7 @@ namespace CFSyncFolders
         public string CheckCanSyncFolders(SyncConfiguration syncConfiguration, bool ignoreLastStartTime,
                                 IFileRepository fileRepository1, IFileRepository fileRepository2)
         {
-            string message = "";
+            var message = "";
 
             // Replace placeholders in source & destination folders
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
@@ -327,7 +323,7 @@ namespace CFSyncFolders
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
 
             // Check if we can sync
-            string message = CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime, fileRepository1, fileRepository2);
+            var message = CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime, fileRepository1, fileRepository2);
             if (!String.IsNullOrEmpty(message))
             {
                 throw new Exception(message);
@@ -622,7 +618,7 @@ namespace CFSyncFolders
                 {                    
                     foreach (FileDetails fileDetails1 in fileDetails1List)
                     {
-                        System.Threading.Thread.Sleep(1);
+                        PauseIfRequired(false);
 
                         WriteDebug(string.Format("Checking (1) {0}", fileDetails1.Name));
 
@@ -652,7 +648,7 @@ namespace CFSyncFolders
                                         folderStatistics.CountFileErrors++;
                                     }
                                 }
-                                System.Threading.Thread.Sleep(1);
+                                PauseIfRequired(false);
                             }
                             else
                             {
@@ -668,13 +664,13 @@ namespace CFSyncFolders
                                     _log.Write("FILE_NEW_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, "", exception);
                                     folderStatistics.CountFileErrors++;
                                 }
-                                System.Threading.Thread.Sleep(1);
+                                PauseIfRequired(false);
                             }
                         }
 
-                        itemsProcessedCount++;                       
-                        System.Threading.Thread.Sleep(1);
-                        
+                        itemsProcessedCount++;
+                        PauseIfRequired(false);
+
                         if (_cancelled)
                         {
                             break;
@@ -689,7 +685,7 @@ namespace CFSyncFolders
                     }
                 }
 
-                System.Threading.Thread.Sleep(1);
+                PauseIfRequired(false);
 
                 // Delete folder 2 files not in folder 1
                 if (!_cancelled && !syncFoldersOptions.KeepDeletedItems)
@@ -698,7 +694,7 @@ namespace CFSyncFolders
                     {
                         WriteDebug(string.Format("Checking (2) {0}", fileDetails2.Name));
 
-                        System.Threading.Thread.Sleep(1);
+                        PauseIfRequired(false);
                         if (IsCanProcessFileExtension(fileDetails2, 
                                     syncFoldersOptions.IncludeFileExtensionList.ToArray(),
                                     syncFoldersOptions.ExcludeFileExtensionList.ToArray()))
@@ -720,7 +716,7 @@ namespace CFSyncFolders
                                     _log.Write("FILE_DELETED_ERROR", "", "", file2, GetFileDetailsForLog(fileDetails2), exception);
                                     folderStatistics.CountFileErrors++;
                                 }
-                                System.Threading.Thread.Sleep(1);
+                                PauseIfRequired(false);
                             }
                             if (_cancelled)
                             {
@@ -728,8 +724,8 @@ namespace CFSyncFolders
                             }
                         }
 
-                        itemsProcessedCount++;            
-                        System.Threading.Thread.Sleep(1);
+                        itemsProcessedCount++;
+                        PauseIfRequired(false);
 
                         // Periodic UI update
                         if (_lastPeriodicProgressEvent.AddSeconds(5) <= DateTime.UtcNow)
@@ -754,7 +750,7 @@ namespace CFSyncFolders
                     {
                         WriteDebug(string.Format("Checking (3) {0}", subFolderDetails2.Name));
 
-                        System.Threading.Thread.Sleep(1);
+                        PauseIfRequired(false);
                         string subFolder1 = fileRepository1.PathCombine(syncFoldersOptions.Folder1Resolved, subFolderDetails2.Name);
                         string subFolder2 = fileRepository2.PathCombine(syncFoldersOptions.Folder2Resolved, subFolderDetails2.Name);
 
@@ -773,8 +769,8 @@ namespace CFSyncFolders
                                 _log.Write("FOLDER_DELETED_ERROR", "", "", subFolder2, "", exception);
                             }
                         }
-                        itemsProcessedCount++;           
-                        System.Threading.Thread.Sleep(1);                        
+                        itemsProcessedCount++;
+                        PauseIfRequired(false);
                         if (_cancelled)
                         {
                             break;
@@ -790,7 +786,7 @@ namespace CFSyncFolders
                     subFolderDetails2List.Clear();
                 }
 
-                System.Threading.Thread.Sleep(1);
+                PauseIfRequired(false);
 
                 // Sync sub-folders
                 if (!_cancelled)
@@ -803,7 +799,7 @@ namespace CFSyncFolders
                     {
                         WriteDebug(string.Format("Checking (4) {0}", subFolderDetails1.Name));
 
-                        System.Threading.Thread.Sleep(1);
+                        PauseIfRequired(false);
                         string subFolder1 = fileRepository1.PathCombine(syncFoldersOptions.Folder1Resolved, subFolderDetails1.Name);
                         string subFolder2 = fileRepository2.PathCombine(syncFoldersOptions.Folder2Resolved, subFolderDetails1.Name);
 
@@ -826,8 +822,8 @@ namespace CFSyncFolders
                                             fileRepository1, fileRepository2,
                                             folderStatistics,
                                             folderLevel + 1);
-                            itemsProcessedCount++;                         
-                            System.Threading.Thread.Sleep(1);
+                            itemsProcessedCount++;
+                            PauseIfRequired(false);
                             
                         }
                         catch (System.Exception exception)
@@ -890,6 +886,16 @@ namespace CFSyncFolders
             return string.Format("Len={0}, Cr={1}, Mod={2}", fileDetails.Length, fileDetails.TimeCreated, fileDetails.TimeModified);
         }
     
+        /// <summary>
+        /// Copies file from source to destination
+        /// </summary>
+        /// <param name="fileRepository1"></param>
+        /// <param name="filePath1"></param>
+        /// <param name="fileDetails1"></param>
+        /// <param name="fileRepository2"></param>
+        /// <param name="filePath2"></param>
+        /// <param name="fileDetails2"></param>
+        /// <param name="copyProperties"></param>
         private static void CopyFile(IFileRepository fileRepository1, string filePath1, FileDetails fileDetails1,
                               IFileRepository fileRepository2, string filePath2, FileDetails fileDetails2,
                               bool copyProperties)
@@ -897,6 +903,12 @@ namespace CFSyncFolders
             fileRepository2.WriteFile(filePath1, filePath2, copyProperties);                
         }    
     
+        /// <summary>
+        /// Checks whether both files are the same. Just check size and timestamp
+        /// </summary>
+        /// <param name="fileDetails1"></param>
+        /// <param name="fileDetails2"></param>
+        /// <returns></returns>
         private static bool IsFilesTheSame(FileDetails fileDetails1, FileDetails fileDetails2)
         {
             bool changed = true;
