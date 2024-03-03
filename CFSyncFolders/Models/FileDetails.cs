@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using CFUtilities;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Models
 {
     /// <summary>
     /// File details

@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CFSyncFolders.Log;
+using CFSyncFolders.Models;
+using CFSyncFolders.Services;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,12 +12,15 @@ using System.Windows.Forms;
 using System.Threading;
 using System.IO;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Forms
 {
+    /// <summary>
+    /// Main form
+    /// </summary>
     public partial class MainForm : Form
     {
         private Mutex _uiMutex = new Mutex();
-        private SyncFolderService _syncService = null;
+        private SyncFoldersService _syncFoldersService = null;
         private BackgroundWorker _worker = null;
         private DateTime _timeMouseOverNotify = DateTime.Now.AddYears(-1);
         private bool _isTaskTray = false;
@@ -55,13 +61,13 @@ namespace CFSyncFolders
 
                 //_logFile = string.Format(@"{0}\Logs\{1}.txt", currentFolder, "{date}");
                 _logFile = Path.Combine(currentFolder, "Logs", "{date}");
-                _syncService = new SyncFolderService(new CSVLogFile(_logFile), dataFolder);
+                _syncFoldersService = new SyncFoldersService(new CSVLogFile(_logFile), dataFolder);
                 //_syncManager.OnDisplayStatus += _syncManager_OnDisplayStatus;
                 //_syncManager.OnFolderChecked += _syncManager_OnFolderChecked;
                 //_syncManager.OnSyncFolderProgress += _syncManager_OnSyncFolderProgress;
 
                 // Handle OnDisplayStatus
-                _syncService.OnDisplayStatus += delegate (string status)
+                _syncFoldersService.OnDisplayStatus += delegate (string status)
                 {
                     this.Invoke((Action)delegate 
                     {
@@ -74,7 +80,8 @@ namespace CFSyncFolders
                 };
 
                 // Handle OnSyncFolderProgress
-                _syncService.OnSyncFolderProgress += delegate (SyncFolderService.ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, string folder1, FolderStatistics folderStatistics, int folderLevel)
+                _syncFoldersService.OnSyncFolderProgress += delegate (SyncFoldersService.ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, 
+                                                    string folder1, FolderStatistics folderStatistics, int folderLevel)
                 {
                     this.Invoke((Action)delegate
                     {
@@ -86,7 +93,7 @@ namespace CFSyncFolders
                     });
                 };
 
-                var syncConfigurations = _syncService.GetSyncConfigurations();
+                var syncConfigurations = _syncFoldersService.GetSyncConfigurations();
                 
                 // Load auto-sync configs
                 foreach (string arg in Environment.GetCommandLineArgs())
@@ -109,7 +116,7 @@ namespace CFSyncFolders
                 // Initialise folder grid          
                 //_autoSyncConfigurationDescription = Environment.MachineName;            
                 string defaultSyncDescription = _autoSyncConfigurationDescriptions.Count == 0 ? Environment.MachineName : _autoSyncConfigurationDescriptions.First();
-                var defaultSyncConfiguration = _syncService.GetSyncConfiguration(defaultSyncDescription);
+                var defaultSyncConfiguration = _syncFoldersService.GetSyncConfiguration(defaultSyncDescription);
                
                 RefreshSyncConfigurations(defaultSyncConfiguration.ID);
                
@@ -169,7 +176,7 @@ namespace CFSyncFolders
             return logFile;
         }
 
-        private void EventOnSyncFolderProgress(SyncFolderService.ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, 
+        private void EventOnSyncFolderProgress(SyncFoldersService.ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, 
                                                 string folder1, FolderStatistics folderStatistics, int folderLevel)
         {
             DateTime currentTime = DateTime.UtcNow;
@@ -178,12 +185,12 @@ namespace CFSyncFolders
             TimeSpan timeSinceLastUpdateStatus = currentTime - _timeLastUpdateStatus;
             if (folderLevel == 1)
             {
-                tssFolders.Text = string.Format("{0} {1}", (progressType == SyncFolderService.ProgressTypes.CompletedFolder ? "Synchronised" : "Synchronising"), syncFolderOptions.Folder1Resolved);
+                tssFolders.Text = string.Format("{0} {1}", (progressType == SyncFoldersService.ProgressTypes.CompletedFolder ? "Synchronised" : "Synchronising"), syncFolderOptions.Folder1Resolved);
                 statusStrip1.Refresh();
                 switch (progressType)
                 {
-                    case SyncFolderService.ProgressTypes.StartingFolder: DisplayMessage(string.Format("Sychronising {0}", syncFolderOptions.Folder1Resolved)); break;
-                    case SyncFolderService.ProgressTypes.CompletedFolder: DisplayMessage(string.Format("Synchronised {0}", syncFolderOptions.Folder1Resolved)); break;
+                    case SyncFoldersService.ProgressTypes.StartingFolder: DisplayMessage(string.Format("Sychronising {0}", syncFolderOptions.Folder1Resolved)); break;
+                    case SyncFoldersService.ProgressTypes.CompletedFolder: DisplayMessage(string.Format("Synchronised {0}", syncFolderOptions.Folder1Resolved)); break;
                 }
                 _timeLastUpdateStatus = currentTime;
             }
@@ -226,7 +233,7 @@ namespace CFSyncFolders
                                 row.Cells["New Files"].Value = folderStatistics.CountFilesNew;
                                 row.Cells["Updated Files"].Value = folderStatistics.CountFilesUpdated;
                                 row.Cells["Deleted Files"].Value = folderStatistics.CountFilesDeleted;
-                                if (folderLevel == 1 && progressType == SyncFolderService.ProgressTypes.CompletedFolder)   // Completed
+                                if (folderLevel == 1 && progressType == SyncFoldersService.ProgressTypes.CompletedFolder)   // Completed
                                 {
                                     int errorCount = folderStatistics.CountFileErrors + folderStatistics.CountFolderErrors;
                                     row.Cells["Status"].Value = errorCount == 0 ? "Completed" : string.Format("Completed ({0} errors)", errorCount);
@@ -396,18 +403,23 @@ namespace CFSyncFolders
             this.Visible = interactive;
 
             DisplayMessage(string.Format("Checking if sync needed for {0}", syncConfigurationDescription));
-                       
+
+            // Get file repository service
+            var fileRepositoryService = new FileRepositoryService();
+            var fileRepository1 = fileRepositoryService.GetFileRepository(System.Configuration.ConfigurationSettings.AppSettings.Get("Folder1.FileRepositoryClass"));
+            var fileRepository2 = fileRepositoryService.GetFileRepository(System.Configuration.ConfigurationSettings.AppSettings.Get("Folder2.FileRepositoryClass"));
+
             // Load SyncConfigurarion
-            var syncConfiguration = _syncService.GetSyncConfiguration(syncConfigurationDescription);            
+            var syncConfiguration = _syncFoldersService.GetSyncConfiguration(syncConfigurationDescription);            
             
             // Check if there's any sync'ing to do
             if (syncConfiguration.GetFoldersThatNeedSync(ignoreLastStartTime).Any())
             {
                 // Check if we can sync. Removable drive may not be plugged in, other removable drive may be plugged
                 // in but it doesn't have the verification file.
-                string checkCanSyncMessage = _syncService.CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime,
-                                    FileRepositoryFactoryService.GetFolder1FileRepository(),
-                                    FileRepositoryFactoryService.GetFolder2FileRepository());
+                string checkCanSyncMessage = _syncFoldersService.CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime,
+                                    fileRepository1, fileRepository2);
+                                    
                                 
                 // Sync if we can
                 if (String.IsNullOrEmpty(checkCanSyncMessage))
@@ -431,9 +443,9 @@ namespace CFSyncFolders
                         tsbSync.Enabled = interactive;
                         niNotify.Text = "Sync Folders - Busy";
                         tscbConfiguration.Enabled = false;    // Prevent change
-                        _syncService.SyncFolders(syncConfiguration, ignoreLastStartTime,
-                                        FileRepositoryFactoryService.GetFolder1FileRepository(),
-                                        FileRepositoryFactoryService.GetFolder2FileRepository());
+                        _syncFoldersService.SyncFolders(syncConfiguration, ignoreLastStartTime,
+                                        FileRepositoryService.GetFolder1FileRepository(),
+                                        FileRepositoryService.GetFolder2FileRepository());
                     });
 
                     // Define worker completion action
@@ -445,7 +457,7 @@ namespace CFSyncFolders
                         niNotify.Text = "Sync Folders - Idle";
                         tssFolders.Text = "Ready";
                         tscbConfiguration.Enabled = true;
-                        DisplayStatus(_syncService.Cancelled ? "Cancelled" : "Completed");
+                        DisplayStatus(_syncFoldersService.Cancelled ? "Cancelled" : "Completed");
                         DisplayMessage("Completed sync");
                         if (args.Error != null)
                         {
@@ -560,7 +572,7 @@ namespace CFSyncFolders
                     }
                     break;
                 case "Cancel":
-                    _syncService.Cancelled = true;
+                    _syncFoldersService.Cancelled = true;
                     break;
             }
         }
@@ -585,7 +597,7 @@ namespace CFSyncFolders
 
         private void SelectSyncConfiguration(Guid id)
         {
-            SyncConfiguration syncConfiguration = _syncService.GetSyncConfiguration(id);
+            SyncConfiguration syncConfiguration = _syncFoldersService.GetSyncConfiguration(id);
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
             InitialiseFolderGrid(syncConfiguration);                   
         }
@@ -593,11 +605,11 @@ namespace CFSyncFolders
         private void tsbEditConfig_Click(object sender, EventArgs e)
         {
             Guid syncConfigurationId = (Guid)tscbConfiguration.ComboBox.SelectedValue;
-            SyncConfiguration syncConfiguration = _syncService.GetSyncConfiguration(syncConfigurationId);
+            SyncConfiguration syncConfiguration = _syncFoldersService.GetSyncConfiguration(syncConfigurationId);
             SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {            
-                _syncService.UpdateConfiguration(syncConfiguration);
+                _syncFoldersService.UpdateConfiguration(syncConfiguration);
 
                 // Refresh
                 SelectSyncConfiguration(syncConfigurationId);   
@@ -617,7 +629,7 @@ namespace CFSyncFolders
             SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
-                _syncService.AddConfiguration(syncConfiguration);
+                _syncFoldersService.AddConfiguration(syncConfiguration);
 
                 // Refresh list of sync configs, display first
                 RefreshSyncConfigurations(syncConfiguration.ID);               
@@ -629,7 +641,7 @@ namespace CFSyncFolders
 
         private void RefreshSyncConfigurations(Guid defaultSyncConfigurationId)
         {
-            List<SyncConfiguration> syncConfigurations = _syncService.GetSyncConfigurations();
+            List<SyncConfiguration> syncConfigurations = _syncFoldersService.GetSyncConfigurations();
 
             //defaultSyncConfiguration.SetResolvedFolders(DateTime.UtcNow);
             tscbConfiguration.ComboBox.DisplayMember = nameof(SyncConfiguration.Description);

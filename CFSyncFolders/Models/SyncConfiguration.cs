@@ -5,8 +5,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using CFSyncFolders.Services;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Models
 {
     /// <summary>
     /// Sync configuration
@@ -70,7 +71,7 @@ namespace CFSyncFolders
             // Find verification file across all drives, not necessary if UNC path is specified  
             if (!String.IsNullOrEmpty(this.VerificationFile) && !this.VerificationFile.StartsWith("\\"))
             {
-                string verificationFileDrive = SyncFolderService.GetVerificationFileDrive(this.VerificationFile);
+                string verificationFileDrive = SyncFoldersService.GetVerificationFileDrive(this.VerificationFile);
                 if (String.IsNullOrEmpty(verificationFileDrive))  // Can't determine verification file drive, possibly removable drive not connected
                 {
                     isVerificationDriveMissing = true;
@@ -101,8 +102,8 @@ namespace CFSyncFolders
                 }
                 else
                 {
-                    syncFoldersOptions.Folder1Resolved = SyncFolderService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder1, date, verificationFile);
-                    syncFoldersOptions.Folder2Resolved = SyncFolderService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder2, date, verificationFile);
+                    syncFoldersOptions.Folder1Resolved = SyncFoldersService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder1, date, verificationFile);
+                    syncFoldersOptions.Folder2Resolved = SyncFoldersService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder2, date, verificationFile);
                 }
             }
         }

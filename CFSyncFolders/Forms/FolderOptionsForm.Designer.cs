@@ -1,4 +1,4 @@
-﻿namespace CFSyncFolders
+﻿namespace CFSyncFolders.Forms
 {
     partial class FolderOptionsForm
     {

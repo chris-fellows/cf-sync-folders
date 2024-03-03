@@ -64,21 +64,21 @@
   <ItemGroup>
     <Compile Include="FileRepository\AWSS3Repository.cs" />
     <Compile Include="FileRepository\DropboxRepository.cs" />
-    <Compile Include="Services\FileRepositoryFactoryService.cs" />
+    <Compile Include="Services\FileRepositoryService.cs" />
     <Compile Include="Forms\FolderOptionsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\FolderOptionsForm.Designer.cs">
       <DependentUpon>FolderOptionsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Model\FolderStatistics.cs" />
-    <Compile Include="ILog.cs" />
-    <Compile Include="Model\FileDetails.cs" />
+    <Compile Include="Models\FolderStatistics.cs" />
+    <Compile Include="Log\ILog.cs" />
+    <Compile Include="Models\FileDetails.cs" />
     <Compile Include="FileRepository\LocalFileRepository.cs" />
-    <Compile Include="Model\FolderDetails.cs" />
+    <Compile Include="Models\FolderDetails.cs" />
     <Compile Include="FileRepository\GoogleDriveRepository.cs" />
     <Compile Include="FileRepository\IFileRepository.cs" />
-    <Compile Include="CSVLogFile.cs" />
+    <Compile Include="Log\CSVLogFile.cs" />
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -86,15 +86,15 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="FileRepository\OneDriveRepository.cs" />
-    <Compile Include="Model\SyncConfiguration.cs" />
-    <Compile Include="Model\SyncFoldersOptions.cs" />
+    <Compile Include="Models\SyncConfiguration.cs" />
+    <Compile Include="Models\SyncFoldersOptions.cs" />
     <Compile Include="Forms\SyncConfigurationForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\SyncConfigurationForm.Designer.cs">
       <DependentUpon>SyncConfigurationForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Services\SyncFolderService.cs" />
+    <Compile Include="Services\SyncFoldersService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\FolderOptionsForm.resx">

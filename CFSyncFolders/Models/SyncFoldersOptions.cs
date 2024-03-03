@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Models
 {
     /// <summary>
     /// Options for sync'ing a pair of folders

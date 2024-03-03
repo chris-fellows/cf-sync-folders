@@ -7,8 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CFSyncFolders.Models;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Forms
 {
     /// <summary>
     /// Form for viewing and modifying sync folders options

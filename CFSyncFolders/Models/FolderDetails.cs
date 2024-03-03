@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Models
 {
     /// <summary>
     /// Folder details

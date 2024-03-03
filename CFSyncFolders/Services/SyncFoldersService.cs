@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
+using CFSyncFolders.FileRepository;
+using CFSyncFolders.Log;
+using CFSyncFolders.Models;
 using CFUtilities.Repository;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Services
 {
     /// <summary>
     /// Performs one-way sync'ing of a source folder to a destination folder. The destination folder is made to look identical
     /// to the source folder.
     /// </summary>
-    internal class SyncFolderService
+    internal class SyncFoldersService
     {
         public enum ProgressTypes : byte
         {
@@ -38,7 +41,7 @@ namespace CFSyncFolders
                                 FolderStatistics folderStatistics, int folderLevel);
         public event SyncFolderProgress OnSyncFolderProgress;
         
-        public SyncFolderService(ILog log, string configurationFolder)
+        public SyncFoldersService(ILog log, string configurationFolder)
         {            
             _log = log;
             _syncConfigurationRepository = new CFUtilities.XML.XmlItemRepository(configurationFolder);              
@@ -366,12 +369,12 @@ namespace CFSyncFolders
                                 Folder = syncFoldersOptions.Folder1Resolved
                             };
                             int folderLevel = 1;
-                            _log.Write("SYNC_START", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                          
+                            _log.LogSyncAction("SYNC_START", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                          
                             SyncFoldersInternal(syncFoldersOptions, syncFoldersOptions,
                                                 fileRepository1, fileRepository2,
                                                 folderStatistics,
                                                 folderLevel);
-                            _log.Write("SYNC_END", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                         
+                            _log.LogSyncAction("SYNC_END", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                         
                             //    mutex.WaitOne();
                             //    activeThreads--;
                             ////    mutex.ReleaseMutex();
@@ -421,7 +424,7 @@ namespace CFSyncFolders
             //Task.WaitAll(tasks.ToArray());
 
             // Bit of a hack to flush the log because we cache items
-            _log.Write("", "", "", "", "", null);
+            _log.LogSyncAction("", "", "", "", "", null);
         }
      
         private static bool IsCanProcessFileExtension(FileInfo fileInfo, string[] includeFileExtensionList,
@@ -603,7 +606,7 @@ namespace CFSyncFolders
             if (!fileRepository2.IsFolderExists(syncFoldersOptions.Folder2Resolved))
             {  
                 fileRepository2.CreateFolder(syncFoldersOptions.Folder2Resolved);
-                _log.Write("FOLDER_NEW", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);
+                _log.LogSyncAction("FOLDER_NEW", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);
             }
 
             // Check if we need to sync these folders
@@ -640,11 +643,11 @@ namespace CFSyncFolders
                                     {
                                         CopyFile(fileRepository1, file1, fileDetails1, fileRepository2, file2, fileDetails2, syncFoldersOptions.KeepFileProperties);
                                         folderStatistics.CountFilesUpdated++;
-                                        _log.Write("FILE_UPDATED", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), null);
+                                        _log.LogSyncAction("FILE_UPDATED", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), null);
                                     }
                                     catch (System.Exception exception)
                                     {
-                                        _log.Write("FILE_UPDATED_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), exception);
+                                        _log.LogSyncAction("FILE_UPDATED_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), exception);
                                         folderStatistics.CountFileErrors++;
                                     }
                                 }
@@ -657,11 +660,11 @@ namespace CFSyncFolders
                                 {
                                     CopyFile(fileRepository1, file1, fileDetails1, fileRepository2, file2, fileDetails2, syncFoldersOptions.KeepFileProperties);
                                     folderStatistics.CountFilesNew++;
-                                    _log.Write("FILE_NEW", file1, GetFileDetailsForLog(fileDetails1), file2, "", null);
+                                    _log.LogSyncAction("FILE_NEW", file1, GetFileDetailsForLog(fileDetails1), file2, "", null);
                                 }
                                 catch (System.Exception exception)
                                 {
-                                    _log.Write("FILE_NEW_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, "", exception);
+                                    _log.LogSyncAction("FILE_NEW_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, "", exception);
                                     folderStatistics.CountFileErrors++;
                                 }
                                 PauseIfRequired(false);
@@ -709,11 +712,11 @@ namespace CFSyncFolders
                                 {
                                     fileRepository2.DeleteFile(file2);
                                     folderStatistics.CountFilesDeleted++;
-                                    _log.Write("FILE_DELETED", "", "", file2, GetFileDetailsForLog(fileDetails2), null);
+                                    _log.LogSyncAction("FILE_DELETED", "", "", file2, GetFileDetailsForLog(fileDetails2), null);
                                 }
                                 catch (System.Exception exception)
                                 {
-                                    _log.Write("FILE_DELETED_ERROR", "", "", file2, GetFileDetailsForLog(fileDetails2), exception);
+                                    _log.LogSyncAction("FILE_DELETED_ERROR", "", "", file2, GetFileDetailsForLog(fileDetails2), exception);
                                     folderStatistics.CountFileErrors++;
                                 }
                                 PauseIfRequired(false);
@@ -761,12 +764,12 @@ namespace CFSyncFolders
                             {
                                 // Sub-folder no longer in folder 1, delete from folder 2
                                 fileRepository2.DeleteFolder(subFolder2);
-                                _log.Write("FOLDER_DELETED", "", "", subFolder2, "", null);
+                                _log.LogSyncAction("FOLDER_DELETED", "", "", subFolder2, "", null);
                             }
                             catch (System.Exception exception)
                             {
                                 folderStatistics.CountFolderErrors++;
-                                _log.Write("FOLDER_DELETED_ERROR", "", "", subFolder2, "", exception);
+                                _log.LogSyncAction("FOLDER_DELETED_ERROR", "", "", subFolder2, "", exception);
                             }
                         }
                         itemsProcessedCount++;
@@ -828,7 +831,7 @@ namespace CFSyncFolders
                         }
                         catch (System.Exception exception)
                         {
-                            _log.Write("FOLDER_SYNC_ERROR", subFolder1, "", subFolder2, "", exception);
+                            _log.LogSyncAction("FOLDER_SYNC_ERROR", subFolder1, "", subFolder2, "", exception);
                             folderStatistics.CountFolderErrors++;
                         }
 

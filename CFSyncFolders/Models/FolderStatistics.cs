@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Models
 {
     /// <summary>
     /// Statistics for a particular folder

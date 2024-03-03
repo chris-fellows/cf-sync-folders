@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
+using CFSyncFolders.Models;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.Forms
 {
     /// <summary>
     /// Form for viewing and modifying sync configuration

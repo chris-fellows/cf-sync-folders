@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CFSyncFolders.Models;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.FileRepository
 {
     /// <summary>
     /// File repository for One Drive (In progress)

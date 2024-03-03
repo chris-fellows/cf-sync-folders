@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using CFSyncFolders.Models;
 
-namespace CFSyncFolders
+namespace CFSyncFolders.FileRepository
 {
     /// <summary>
     /// Local file repository (local machine or network share)
