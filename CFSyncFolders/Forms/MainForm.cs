@@ -1,4 +1,4 @@
-﻿using CFSyncFolders.Log;
+﻿using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 using CFSyncFolders.Services;
 using System;
@@ -7,10 +7,8 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using System.Threading;
-using System.IO;
 
 namespace CFSyncFolders.Forms
 {
@@ -21,22 +19,24 @@ namespace CFSyncFolders.Forms
     {
         private Mutex _uiMutex = new Mutex();
         private SyncFoldersService _syncFoldersService = null;
+        private readonly ISyncConfigurationService _syncConfigurationService = null;
         private BackgroundWorker _worker = null;
         private DateTime _timeMouseOverNotify = DateTime.Now.AddYears(-1);
         private bool _isTaskTray = false;
         private System.Timers.Timer _timer = null;
-        private bool _syncing = false;
-        private string _logFile;         
+        private bool _syncing = false;            
         private List<string> _autoSyncConfigurationDescriptions = new List<string>();
         private DateTime _timeLastUpdateStatus = DateTime.MinValue;
         private Dictionary<string, DateTime> _timeLastGridUpdate = new Dictionary<string, DateTime>();
         
-        public MainForm()
-        {
+        public MainForm(IAuditLog auditLog, ISyncConfigurationService syncConfigurationService)                        
+        {            
             InitializeComponent();
 
-            Control.CheckForIllegalCrossThreadCalls = false;        
-            
+            Control.CheckForIllegalCrossThreadCalls = false;
+
+            _syncConfigurationService = syncConfigurationService;
+
             // Allow single instance only
             if (System.Diagnostics.Process.GetProcessesByName(System.Diagnostics.Process.GetCurrentProcess().ProcessName).Length > 1)
             {
@@ -46,22 +46,9 @@ namespace CFSyncFolders.Forms
             try
             {
                 // Get path to executable
-                string currentFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-                string dataFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("DataFolder").ToString();
-                if (dataFolder.Equals("{default}"))
-                {
-                    dataFolder = Path.Combine(currentFolder, "Configuration");
-                }
-                dataFolder = dataFolder.Replace("{user}", Environment.UserName);
-                dataFolder = dataFolder.Replace("{machine}", Environment.MachineName);
-
-                //_logFile = string.Format(@"{0}\Logs\Log-{1}-{2}.txt", currentFolder, DateTime.Now.Month, DateTime.Now.Year);
-                //string configurationFolder = System.IO.Path.Combine(currentFolder, "Configuration");
-                //dataFolder = @"C:\Data\Applications\CFSyncFolders\Configuration";   // Debugging
-
-                //_logFile = string.Format(@"{0}\Logs\{1}.txt", currentFolder, "{date}");
-                _logFile = Path.Combine(currentFolder, "Logs", "{date}");
-                _syncFoldersService = new SyncFoldersService(new CSVLogFile(_logFile), dataFolder);
+                string currentFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);           
+                
+                _syncFoldersService = new SyncFoldersService(auditLog, _syncConfigurationService);
                 //_syncManager.OnDisplayStatus += _syncManager_OnDisplayStatus;
                 //_syncManager.OnFolderChecked += _syncManager_OnFolderChecked;
                 //_syncManager.OnSyncFolderProgress += _syncManager_OnSyncFolderProgress;
@@ -93,7 +80,7 @@ namespace CFSyncFolders.Forms
                     });
                 };
 
-                var syncConfigurations = _syncFoldersService.GetSyncConfigurations();
+                var syncConfigurations = _syncConfigurationService.GetAll();                
                 
                 // Load auto-sync configs
                 foreach (string arg in Environment.GetCommandLineArgs())
@@ -101,22 +88,29 @@ namespace CFSyncFolders.Forms
                     if (arg.ToLower().StartsWith("/configs="))
                     {
                         var elements = arg.Split('=');
-                        _autoSyncConfigurationDescriptions.AddRange(elements[1].Split(','));
-                        foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
+                        if (elements[1] == "*")   // All system configs
                         {
-                            var syncConfiguration = syncConfigurations.FirstOrDefault(sc => sc.Description.ToLower() == syncConfigurationDescription.ToLower());
-                            if (syncConfiguration == null)
+                            _autoSyncConfigurationDescriptions.AddRange(syncConfigurations.Select(sc => sc.Description).ToList());
+                        }
+                        else    // List of sync config descriptions
+                        {
+                            _autoSyncConfigurationDescriptions.AddRange(elements[1].Split(','));
+                            foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
                             {
-                                throw new Exception(string.Format("Sync configuration {0} does not exist", syncConfigurationDescription));
+                                var syncConfiguration = syncConfigurations.FirstOrDefault(sc =>
+                                            sc.Description.Equals(syncConfigurationDescription, StringComparison.InvariantCultureIgnoreCase));
+                                if (syncConfiguration == null)
+                                {
+                                    throw new Exception(string.Format("Sync configuration {0} does not exist", syncConfigurationDescription));
+                                }
                             }
                         }
                     }
                 }
 
-                // Initialise folder grid          
-                //_autoSyncConfigurationDescription = Environment.MachineName;            
+                // Initialise folder grid                          
                 string defaultSyncDescription = _autoSyncConfigurationDescriptions.Count == 0 ? Environment.MachineName : _autoSyncConfigurationDescriptions.First();
-                var defaultSyncConfiguration = _syncFoldersService.GetSyncConfiguration(defaultSyncDescription);
+                var defaultSyncConfiguration = _syncConfigurationService.GetByDescription(defaultSyncDescription);
                
                 RefreshSyncConfigurations(defaultSyncConfiguration.ID);
                
@@ -169,12 +163,12 @@ namespace CFSyncFolders.Forms
             }
         }
 
-        private string GetLogFile()
-        {     
-            string logFile = _logFile.Replace("{date}", string.Format("{0}-{1}", DateTime.Now.Month, DateTime.Now.Year));
-            //string logFile = string.Format(@"{ 0}\Logs\Log-{1}-{2}.txt", currentFolder, DateTime.Now.Month, DateTime.Now.Year);
-            return logFile;
-        }
+        //private string GetLogFile()
+        //{     
+        //    string logFile = _logFile.Replace("{date}", string.Format("{0}-{1}", DateTime.Now.Month, DateTime.Now.Year));
+        //    //string logFile = string.Format(@"{ 0}\Logs\Log-{1}-{2}.txt", currentFolder, DateTime.Now.Month, DateTime.Now.Year);
+        //    return logFile;
+        //}
 
         private void EventOnSyncFolderProgress(SyncFoldersService.ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, 
                                                 string folder1, FolderStatistics folderStatistics, int folderLevel)
@@ -365,7 +359,7 @@ namespace CFSyncFolders.Forms
                 if (!_syncing)    // Do nothing if sync in progress
                 {
                     // Check each sync config
-                    foreach (string syncConfigurationDescription in _autoSyncConfigurationDescriptions)
+                    foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
                     {                        
                         // Run sync
                         RunSync(false, syncConfigurationDescription, true, false, false);
@@ -409,17 +403,16 @@ namespace CFSyncFolders.Forms
             var fileRepository1 = fileRepositoryService.GetFileRepository(System.Configuration.ConfigurationSettings.AppSettings.Get("Folder1.FileRepositoryClass"));
             var fileRepository2 = fileRepositoryService.GetFileRepository(System.Configuration.ConfigurationSettings.AppSettings.Get("Folder2.FileRepositoryClass"));
 
-            // Load SyncConfigurarion
-            var syncConfiguration = _syncFoldersService.GetSyncConfiguration(syncConfigurationDescription);            
-            
+            // Load SyncConfigurarion                       
+            var syncConfiguration = _syncConfigurationService.GetByDescription(syncConfigurationDescription);
+
             // Check if there's any sync'ing to do
             if (syncConfiguration.GetFoldersThatNeedSync(ignoreLastStartTime).Any())
             {
                 // Check if we can sync. Removable drive may not be plugged in, other removable drive may be plugged
                 // in but it doesn't have the verification file.
-                string checkCanSyncMessage = _syncFoldersService.CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime,
-                                    fileRepository1, fileRepository2);
-                                    
+                var checkCanSyncMessage = _syncFoldersService.CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime,
+                                    fileRepository1, fileRepository2);                                    
                                 
                 // Sync if we can
                 if (String.IsNullOrEmpty(checkCanSyncMessage))
@@ -444,8 +437,9 @@ namespace CFSyncFolders.Forms
                         niNotify.Text = "Sync Folders - Busy";
                         tscbConfiguration.Enabled = false;    // Prevent change
                         _syncFoldersService.SyncFolders(syncConfiguration, ignoreLastStartTime,
-                                        FileRepositoryService.GetFolder1FileRepository(),
-                                        FileRepositoryService.GetFolder2FileRepository());
+                                        fileRepository1, fileRepository2);
+                                        //FileRepositoryService.GetFolder1FileRepository(),
+                                        //FileRepositoryService.GetFolder2FileRepository());
                     });
 
                     // Define worker completion action
@@ -547,17 +541,17 @@ namespace CFSyncFolders.Forms
 
         private void btnViewLog_Click(object sender, EventArgs e)
         {
-            string logFile = GetLogFile();
-            if (System.IO.File.Exists(logFile))
-            {
-                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                startInfo.FileName = logFile;
-                System.Diagnostics.Process.Start(startInfo);
-            }
-            else
-            {
-                MessageBox.Show("Log file does not exist", "View Log");
-            }
+            //string logFile = GetLogFile();
+            //if (System.IO.File.Exists(logFile))
+            //{
+            //    System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+            //    startInfo.FileName = logFile;
+            //    System.Diagnostics.Process.Start(startInfo);
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Log file does not exist", "View Log");
+            //}
         }
 
         private void tsbSync_Click(object sender, EventArgs e)
@@ -579,15 +573,15 @@ namespace CFSyncFolders.Forms
 
         private void tsbViewLog_Click(object sender, EventArgs e)
         {
-            string logFile = GetLogFile();
-            if (System.IO.File.Exists(logFile))
-            {
-                CFUtilities.IOUtilities.OpenFileWithDefaultApplication(logFile);                
-            }
-            else
-            {
-                MessageBox.Show("Log file does not exist", "View Log");
-            }
+            //string logFile = GetLogFile();
+            //if (System.IO.File.Exists(logFile))
+            //{
+            //    CFUtilities.IOUtilities.OpenFileWithDefaultApplication(logFile);                
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Log file does not exist", "View Log");
+            //}
         }
 
         private void tscbConfiguration_SelectedIndexChanged(object sender, EventArgs e)
@@ -597,7 +591,7 @@ namespace CFSyncFolders.Forms
 
         private void SelectSyncConfiguration(Guid id)
         {
-            SyncConfiguration syncConfiguration = _syncFoldersService.GetSyncConfiguration(id);
+            SyncConfiguration syncConfiguration = _syncConfigurationService.GetById(id);
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
             InitialiseFolderGrid(syncConfiguration);                   
         }
@@ -605,11 +599,11 @@ namespace CFSyncFolders.Forms
         private void tsbEditConfig_Click(object sender, EventArgs e)
         {
             Guid syncConfigurationId = (Guid)tscbConfiguration.ComboBox.SelectedValue;
-            SyncConfiguration syncConfiguration = _syncFoldersService.GetSyncConfiguration(syncConfigurationId);
+            SyncConfiguration syncConfiguration = _syncConfigurationService.GetById(syncConfigurationId);
             SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
-            {            
-                _syncFoldersService.UpdateConfiguration(syncConfiguration);
+            {
+                _syncConfigurationService.Update(syncConfiguration);
 
                 // Refresh
                 SelectSyncConfiguration(syncConfigurationId);   
@@ -629,19 +623,16 @@ namespace CFSyncFolders.Forms
             SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
-                _syncFoldersService.AddConfiguration(syncConfiguration);
+                _syncConfigurationService.Add(syncConfiguration);
 
                 // Refresh list of sync configs, display first
                 RefreshSyncConfigurations(syncConfiguration.ID);               
             }
-
-
-
         }
 
         private void RefreshSyncConfigurations(Guid defaultSyncConfigurationId)
         {
-            List<SyncConfiguration> syncConfigurations = _syncFoldersService.GetSyncConfigurations();
+            List<SyncConfiguration> syncConfigurations = _syncConfigurationService.GetAll();
 
             //defaultSyncConfiguration.SetResolvedFolders(DateTime.UtcNow);
             tscbConfiguration.ComboBox.DisplayMember = nameof(SyncConfiguration.Description);

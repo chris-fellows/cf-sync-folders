@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 
 namespace CFSyncFolders.FileRepository

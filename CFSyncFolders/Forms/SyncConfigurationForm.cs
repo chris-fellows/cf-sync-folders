@@ -33,6 +33,7 @@ namespace CFSyncFolders.Forms
         {
             txtDescription.Text = syncConfiguration.Description;
             txtVerificationFile.Text = syncConfiguration.VerificationFile;
+            txtMachine.Text = syncConfiguration.Machine;
 
             dgvFolder.Rows.Clear();
             dgvFolder.Columns.Clear();
@@ -61,6 +62,7 @@ namespace CFSyncFolders.Forms
             syncConfiguration.ID = _syncConfigurationOld.ID;
             syncConfiguration.Description = txtDescription.Text;
             syncConfiguration.VerificationFile = txtVerificationFile.Text;
+            syncConfiguration.Machine = txtMachine.Text;
             //syncConfiguration.FoldersOptions.Clear();
             syncConfiguration.FoldersOptions = _syncConfigurationNew.FoldersOptions;
 
@@ -243,6 +245,11 @@ namespace CFSyncFolders.Forms
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+        }
+
+        private void btnLocalMachine_Click(object sender, EventArgs e)
+        {
+            txtMachine.Text = Environment.MachineName;
         }
 
         //private void tsbRemoveFolder_Click(object sender, EventArgs e)

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 using CFSyncFolders.Services;
 
@@ -28,6 +25,12 @@ namespace CFSyncFolders.Models
         [XmlAttribute("VerificationFile")]
         public string VerificationFile { get; set; }
 
+        /// <summary>
+        /// Specific machine that config is valid for (null=Any). It is necessary for configs copying local 
+        /// machine files (C:\*) to NAS. Each machine needs to only use the config for itself.
+        /// </summary>
+        public string Machine { get; set; }
+
         [XmlArray("FoldersOptions")]
         [XmlArrayItem("FolderOptions")]
         public List<SyncFoldersOptions> FoldersOptions = new List<SyncFoldersOptions>();
@@ -39,7 +42,8 @@ namespace CFSyncFolders.Models
                 ID = ID,
                 Description = Description,
                 VerificationFile = VerificationFile,
-                FoldersOptions = FoldersOptions == null ? null : FoldersOptions.Select(fo => (SyncFoldersOptions)fo.Clone()).ToList()        
+                Machine = Machine,
+                FoldersOptions = FoldersOptions == null ? null : FoldersOptions.Select(fo => (SyncFoldersOptions)fo.Clone()).ToList()
             };
             return copy;
         }

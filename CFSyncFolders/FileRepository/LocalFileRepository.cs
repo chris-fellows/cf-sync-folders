@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 
 namespace CFSyncFolders.FileRepository

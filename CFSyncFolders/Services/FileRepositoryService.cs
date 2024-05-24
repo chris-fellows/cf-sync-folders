@@ -1,4 +1,5 @@
-﻿using CFSyncFolders.FileRepository;
+﻿using CFSyncFolders.Interfaces;
+using CFSyncFolders.FileRepository;
 
 namespace CFSyncFolders.Services
 {

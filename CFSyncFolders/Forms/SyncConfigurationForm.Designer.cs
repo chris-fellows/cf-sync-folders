@@ -36,8 +36,11 @@
             this.label1 = new System.Windows.Forms.Label();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsbSave = new System.Windows.Forms.ToolStripButton();
-            this.tsbAddFolder = new System.Windows.Forms.ToolStripButton();
             this.tsbCancel = new System.Windows.Forms.ToolStripButton();
+            this.tsbAddFolder = new System.Windows.Forms.ToolStripButton();
+            this.txtMachine = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.btnLocalMachine = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFolder)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -49,12 +52,12 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvFolder.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvFolder.Location = new System.Drawing.Point(12, 87);
+            this.dgvFolder.Location = new System.Drawing.Point(12, 105);
             this.dgvFolder.MultiSelect = false;
             this.dgvFolder.Name = "dgvFolder";
             this.dgvFolder.ReadOnly = true;
             this.dgvFolder.RowHeadersVisible = false;
-            this.dgvFolder.Size = new System.Drawing.Size(913, 359);
+            this.dgvFolder.Size = new System.Drawing.Size(913, 373);
             this.dgvFolder.TabIndex = 9;
             this.dgvFolder.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 
@@ -111,15 +114,6 @@
             this.tsbSave.Text = "Save";
             this.tsbSave.Click += new System.EventHandler(this.tsbSave_Click);
             // 
-            // tsbAddFolder
-            // 
-            this.tsbAddFolder.Image = ((System.Drawing.Image)(resources.GetObject("tsbAddFolder.Image")));
-            this.tsbAddFolder.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbAddFolder.Name = "tsbAddFolder";
-            this.tsbAddFolder.Size = new System.Drawing.Size(85, 22);
-            this.tsbAddFolder.Text = "Add Folder";
-            this.tsbAddFolder.Click += new System.EventHandler(this.tsbAddFolder_Click);
-            // 
             // tsbCancel
             // 
             this.tsbCancel.Image = ((System.Drawing.Image)(resources.GetObject("tsbCancel.Image")));
@@ -129,11 +123,49 @@
             this.tsbCancel.Text = "Cancel";
             this.tsbCancel.Click += new System.EventHandler(this.tsbCancel_Click);
             // 
+            // tsbAddFolder
+            // 
+            this.tsbAddFolder.Image = ((System.Drawing.Image)(resources.GetObject("tsbAddFolder.Image")));
+            this.tsbAddFolder.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbAddFolder.Name = "tsbAddFolder";
+            this.tsbAddFolder.Size = new System.Drawing.Size(85, 22);
+            this.tsbAddFolder.Text = "Add Folder";
+            this.tsbAddFolder.Click += new System.EventHandler(this.tsbAddFolder_Click);
+            // 
+            // txtMachine
+            // 
+            this.txtMachine.Location = new System.Drawing.Point(96, 79);
+            this.txtMachine.Name = "txtMachine";
+            this.txtMachine.Size = new System.Drawing.Size(163, 20);
+            this.txtMachine.TabIndex = 12;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(12, 84);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(51, 13);
+            this.label3.TabIndex = 11;
+            this.label3.Text = "Machine:";
+            // 
+            // btnLocalMachine
+            // 
+            this.btnLocalMachine.Location = new System.Drawing.Point(266, 79);
+            this.btnLocalMachine.Name = "btnLocalMachine";
+            this.btnLocalMachine.Size = new System.Drawing.Size(92, 23);
+            this.btnLocalMachine.TabIndex = 13;
+            this.btnLocalMachine.Text = "This Machine";
+            this.btnLocalMachine.UseVisualStyleBackColor = true;
+            this.btnLocalMachine.Click += new System.EventHandler(this.btnLocalMachine_Click);
+            // 
             // SyncConfigurationForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(937, 458);
+            this.ClientSize = new System.Drawing.Size(937, 490);
+            this.Controls.Add(this.btnLocalMachine);
+            this.Controls.Add(this.txtMachine);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.dgvFolder);
             this.Controls.Add(this.txtVerificationFile);
@@ -165,5 +197,8 @@
         private System.Windows.Forms.ToolStripButton tsbSave;
         private System.Windows.Forms.ToolStripButton tsbAddFolder;
         private System.Windows.Forms.ToolStripButton tsbCancel;
+        private System.Windows.Forms.TextBox txtMachine;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button btnLocalMachine;
     }
 }

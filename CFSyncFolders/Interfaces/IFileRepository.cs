@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using CFSyncFolders.Models;
 
-namespace CFSyncFolders.FileRepository
+namespace CFSyncFolders.Interfaces
 {
     /// <summary>
     /// Interface to file system

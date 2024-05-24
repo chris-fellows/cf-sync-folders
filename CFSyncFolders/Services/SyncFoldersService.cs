@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
-using CFSyncFolders.FileRepository;
-using CFSyncFolders.Log;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
-using CFUtilities.Repository;
 
 namespace CFSyncFolders.Services
 {
@@ -24,8 +22,9 @@ namespace CFSyncFolders.Services
         }
 
         private bool _cancelled = false;    
-        private ILog _log;
-        private IItemRepository _syncConfigurationRepository;
+        private readonly IAuditLog _auditLog;       
+        private readonly ISyncConfigurationService _syncConfigurationService;
+
         private DateTime _lastProgressEvent = DateTime.UtcNow;
         private DateTime _lastStatusEvent = DateTime.UtcNow;
         private DateTime _lastPeriodicProgressEvent = DateTime.UtcNow;
@@ -41,10 +40,10 @@ namespace CFSyncFolders.Services
                                 FolderStatistics folderStatistics, int folderLevel);
         public event SyncFolderProgress OnSyncFolderProgress;
         
-        public SyncFoldersService(ILog log, string configurationFolder)
+        public SyncFoldersService(IAuditLog auditLog, ISyncConfigurationService syncConfigurationService)
         {            
-            _log = log;
-            _syncConfigurationRepository = new CFUtilities.XML.XmlItemRepository(configurationFolder);              
+            _auditLog = auditLog;
+            _syncConfigurationService = syncConfigurationService;            
         }      
 
         /// <summary>
@@ -199,116 +198,98 @@ namespace CFSyncFolders.Services
         //    _syncConfigurationRepository.Insert<SyncConfiguration>(syncConfiguration.ID.ToString(), syncConfiguration);
 
         //    return syncConfiguration;
+        //}       
+
+        //private List<SyncFoldersOptions> LoadSyncFoldersOptionsList()
+        //{
+        //    var optionsList = new List<SyncFoldersOptions>();
+        //    int count = 0;
+        //    while (true)
+        //    {
+        //        count++;
+        //        string key1 = string.Format("Folders.{0}.Folder1", count);
+        //        string key2 = string.Format("Folders.{0}.Folder2", count);
+        //        if (System.Configuration.ConfigurationSettings.AppSettings.Get(key1) != null)
+        //        {
+        //            // Load folder pair, replace placeholders
+        //            SyncFoldersOptions options = new SyncFoldersOptions()
+        //            {
+        //                ID = Guid.NewGuid(),
+        //                //Folder1 = SyncManager.GetStringWithPlaceholdersReplaced(System.Configuration.ConfigurationSettings.AppSettings.Get(key1)),
+        //                //Folder2 = SyncManager.GetStringWithPlaceholdersReplaced(System.Configuration.ConfigurationSettings.AppSettings.Get(key2)),
+        //                Folder1 = System.Configuration.ConfigurationSettings.AppSettings.Get(key1),
+        //                Folder2 = System.Configuration.ConfigurationSettings.AppSettings.Get(key2),
+        //                Enabled = true,
+        //                IncludeFileExtensionList = new List<string>(),
+        //                ExcludeFileExtensionList = new List<string>(),
+        //                KeepFileProperties = false,
+        //                KeepDeletedItems = false,
+        //                FrequencySeconds = 86400    // Daily
+        //            };
+        //            optionsList.Add(options);
+        //        }
+        //        else
+        //        {
+        //            break;
+        //        }
+        //    }
+        //    return optionsList;
         //}
 
         /// <summary>
-        /// Returns named configuration
+        /// Whether the folders can be sync'd for the sync configuration.
+        /// 
+        /// Possible reasons for rejection:
+        /// - Sync config is only for specific machines.
+        /// - Source or destination folder is a removable drive that isn't currently connected.       
         /// </summary>
-        /// <param name="description"></param>
+        /// <param name="syncConfiguration"></param>
+        /// <param name="ignoreLastStartTime"></param>
+        /// <param name="fileRepository1"></param>
+        /// <param name="fileRepository2"></param>
         /// <returns></returns>
-        public SyncConfiguration GetSyncConfiguration(string description)
-        {
-            return _syncConfigurationRepository.GetAll<SyncConfiguration>().FirstOrDefault(sc => sc.Description.ToLower() == description.ToLower());
-        }
-
-        public SyncConfiguration GetSyncConfiguration(Guid id)
-        {
-            return _syncConfigurationRepository.GetAll<SyncConfiguration>().FirstOrDefault(sc => sc.ID == id);
-        }
-
-        public List<SyncConfiguration> GetSyncConfigurations()
-        {            
-            return _syncConfigurationRepository.GetAll<SyncConfiguration>().OrderBy(sc => sc.Description).ToList();
-        }
-
-        public void UpdateConfiguration(SyncConfiguration syncConfiguration)
-        {
-            _syncConfigurationRepository.Update(syncConfiguration.ID.ToString(), syncConfiguration);
-        }
-
-        public void AddConfiguration(SyncConfiguration syncConfiguration)
-        {
-            _syncConfigurationRepository.Insert(syncConfiguration.ID.ToString(), syncConfiguration);
-        }
-
-        private List<SyncFoldersOptions> LoadSyncFoldersOptionsList()
-        {
-            var optionsList = new List<SyncFoldersOptions>();
-            int count = 0;
-            while (true)
-            {
-                count++;
-                string key1 = string.Format("Folders.{0}.Folder1", count);
-                string key2 = string.Format("Folders.{0}.Folder2", count);
-                if (System.Configuration.ConfigurationSettings.AppSettings.Get(key1) != null)
-                {
-                    // Load folder pair, replace placeholders
-                    SyncFoldersOptions options = new SyncFoldersOptions()
-                    {
-                        ID = Guid.NewGuid(),
-                        //Folder1 = SyncManager.GetStringWithPlaceholdersReplaced(System.Configuration.ConfigurationSettings.AppSettings.Get(key1)),
-                        //Folder2 = SyncManager.GetStringWithPlaceholdersReplaced(System.Configuration.ConfigurationSettings.AppSettings.Get(key2)),
-                        Folder1 = System.Configuration.ConfigurationSettings.AppSettings.Get(key1),
-                        Folder2 = System.Configuration.ConfigurationSettings.AppSettings.Get(key2),
-                        Enabled = true,
-                        IncludeFileExtensionList = new List<string>(),
-                        ExcludeFileExtensionList = new List<string>(),
-                        KeepFileProperties = false,
-                        KeepDeletedItems = false,
-                        FrequencySeconds = 86400    // Daily
-                    };
-                    optionsList.Add(options);
-                }
-                else
-                {
-                    break;
-                }
-            }
-            return optionsList;
-        }
-
         public string CheckCanSyncFolders(SyncConfiguration syncConfiguration, bool ignoreLastStartTime,
-                                IFileRepository fileRepository1, IFileRepository fileRepository2)
-        {
-            var message = "";
-
+                                          IFileRepository fileRepository1, IFileRepository fileRepository2)
+        {            
             // Replace placeholders in source & destination folders
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
+
+            // Check if machine specific config
+            if (!String.IsNullOrEmpty(syncConfiguration.Machine) && 
+                syncConfiguration.Machine.Equals(Environment.MachineName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return $"Sync configuration is only valid for machine {syncConfiguration.Machine}";
+            }
 
             // Check if we can sync all of these folders
             foreach (SyncFoldersOptions syncFoldersOptions in syncConfiguration.FoldersOptions)
             {
                 // If folder 1 contains placeholder to determine drive letter for verification file then it may not
                 // be available.
-                if (String.IsNullOrEmpty(message) && String.IsNullOrEmpty(syncFoldersOptions.Folder1Resolved))
+                if (String.IsNullOrEmpty(syncFoldersOptions.Folder1Resolved))
                 {
-                    message = string.Format("Source folder {0} cannot be found for verification file {1}. It " +
+                    return string.Format("Source folder {0} cannot be found for verification file {1}. It " +
                                     "may be that a removable drive is not currently available",
                                     syncFoldersOptions.Folder1, syncConfiguration.VerificationFile);
                 }
 
                 // If folder 2 contains placeholder to determine drive letter for verification file then it may not
                 // be available.
-                if (String.IsNullOrEmpty(message) && String.IsNullOrEmpty(syncFoldersOptions.Folder2Resolved))
+                if (String.IsNullOrEmpty(syncFoldersOptions.Folder2Resolved))
                 {
-                    message = string.Format("Destination folder {0} cannot be found for verification file {1}. It " +
+                    return string.Format("Destination folder {0} cannot be found for verification file {1}. It " +
                                     "may be that a removable drive is not currently available",
                                     syncFoldersOptions.Folder2, syncConfiguration.VerificationFile);
                 }
 
                 // Restrict destination drives, prevents accidental trashing of files if config set up incorrectly
-                if (String.IsNullOrEmpty(message) && !fileRepository2.IsFolderWritable(syncFoldersOptions.Folder2Resolved))
+                if (!fileRepository2.IsFolderWritable(syncFoldersOptions.Folder2Resolved))
                 {
-                    message = "This repository cannot be used because it may not be currently available";
-                }
-
-                if (!String.IsNullOrEmpty(message))
-                {
-                    break;
+                    return "This repository cannot be used because it may not be currently available";
                 }
             }
 
-            return message;
+            return null;    // Can check
         }
 
         /// <summary>
@@ -340,8 +321,7 @@ namespace CFSyncFolders.Services
 
             // Sync folders            
             foreach (SyncFoldersOptions syncFoldersOptions in syncConfiguration.FoldersOptions.Where(fo => fo.Enabled))
-            {
-       
+            {       
                 if (syncFoldersOptions.IsSyncOverdue || ignoreLastStartTime)
                 {
                     if (fileRepository2.IsFolderAvailable(syncFoldersOptions.Folder2Resolved))        // Do nothing if destination not available
@@ -350,7 +330,7 @@ namespace CFSyncFolders.Services
                         {
                             // Set started time
                             syncFoldersOptions.TimeLastStarted = DateTime.UtcNow;
-                            _syncConfigurationRepository.Update<SyncConfiguration>(syncConfiguration.ID.ToString(), syncConfiguration);
+                            _syncConfigurationService.Update(syncConfiguration);
 
                             // Multi-threading disabled, causes issues
                             //var task = Task.Factory.StartNew<int>(() =>
@@ -369,12 +349,12 @@ namespace CFSyncFolders.Services
                                 Folder = syncFoldersOptions.Folder1Resolved
                             };
                             int folderLevel = 1;
-                            _log.LogSyncAction("SYNC_START", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                          
+                            _auditLog.LogAction("SYNC_START", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                          
                             SyncFoldersInternal(syncFoldersOptions, syncFoldersOptions,
                                                 fileRepository1, fileRepository2,
                                                 folderStatistics,
                                                 folderLevel);
-                            _log.LogSyncAction("SYNC_END", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                         
+                            _auditLog.LogAction("SYNC_END", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                         
                             //    mutex.WaitOne();
                             //    activeThreads--;
                             ////    mutex.ReleaseMutex();
@@ -386,13 +366,13 @@ namespace CFSyncFolders.Services
                             if (!_cancelled)
                             {
                                 syncFoldersOptions.TimeLastCompleted = DateTime.UtcNow;
-                                _syncConfigurationRepository.Update<SyncConfiguration>(syncConfiguration.ID.ToString(), syncConfiguration);
+                                _syncConfigurationService.Update(syncConfiguration);
                             }
                         }
                     }
 
                     // Save sync status
-                    _syncConfigurationRepository.Update<SyncConfiguration>(syncConfiguration.ID.ToString(), syncConfiguration);
+                    _syncConfigurationService.Update(syncConfiguration);
                 }
             
                 /*
@@ -424,7 +404,7 @@ namespace CFSyncFolders.Services
             //Task.WaitAll(tasks.ToArray());
 
             // Bit of a hack to flush the log because we cache items
-            _log.LogSyncAction("", "", "", "", "", null);
+            _auditLog.LogAction("", "", "", "", "", null);
         }
      
         private static bool IsCanProcessFileExtension(FileInfo fileInfo, string[] includeFileExtensionList,
@@ -606,7 +586,7 @@ namespace CFSyncFolders.Services
             if (!fileRepository2.IsFolderExists(syncFoldersOptions.Folder2Resolved))
             {  
                 fileRepository2.CreateFolder(syncFoldersOptions.Folder2Resolved);
-                _log.LogSyncAction("FOLDER_NEW", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);
+                _auditLog.LogAction("FOLDER_NEW", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);
             }
 
             // Check if we need to sync these folders
@@ -643,11 +623,11 @@ namespace CFSyncFolders.Services
                                     {
                                         CopyFile(fileRepository1, file1, fileDetails1, fileRepository2, file2, fileDetails2, syncFoldersOptions.KeepFileProperties);
                                         folderStatistics.CountFilesUpdated++;
-                                        _log.LogSyncAction("FILE_UPDATED", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), null);
+                                        _auditLog.LogAction("FILE_UPDATED", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), null);
                                     }
                                     catch (System.Exception exception)
                                     {
-                                        _log.LogSyncAction("FILE_UPDATED_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), exception);
+                                        _auditLog.LogAction("FILE_UPDATED_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, GetFileDetailsForLog(fileDetails2), exception);
                                         folderStatistics.CountFileErrors++;
                                     }
                                 }
@@ -660,11 +640,11 @@ namespace CFSyncFolders.Services
                                 {
                                     CopyFile(fileRepository1, file1, fileDetails1, fileRepository2, file2, fileDetails2, syncFoldersOptions.KeepFileProperties);
                                     folderStatistics.CountFilesNew++;
-                                    _log.LogSyncAction("FILE_NEW", file1, GetFileDetailsForLog(fileDetails1), file2, "", null);
+                                    _auditLog.LogAction("FILE_NEW", file1, GetFileDetailsForLog(fileDetails1), file2, "", null);
                                 }
                                 catch (System.Exception exception)
                                 {
-                                    _log.LogSyncAction("FILE_NEW_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, "", exception);
+                                    _auditLog.LogAction("FILE_NEW_ERROR", file1, GetFileDetailsForLog(fileDetails1), file2, "", exception);
                                     folderStatistics.CountFileErrors++;
                                 }
                                 PauseIfRequired(false);
@@ -712,11 +692,11 @@ namespace CFSyncFolders.Services
                                 {
                                     fileRepository2.DeleteFile(file2);
                                     folderStatistics.CountFilesDeleted++;
-                                    _log.LogSyncAction("FILE_DELETED", "", "", file2, GetFileDetailsForLog(fileDetails2), null);
+                                    _auditLog.LogAction("FILE_DELETED", "", "", file2, GetFileDetailsForLog(fileDetails2), null);
                                 }
                                 catch (System.Exception exception)
                                 {
-                                    _log.LogSyncAction("FILE_DELETED_ERROR", "", "", file2, GetFileDetailsForLog(fileDetails2), exception);
+                                    _auditLog.LogAction("FILE_DELETED_ERROR", "", "", file2, GetFileDetailsForLog(fileDetails2), exception);
                                     folderStatistics.CountFileErrors++;
                                 }
                                 PauseIfRequired(false);
@@ -764,12 +744,12 @@ namespace CFSyncFolders.Services
                             {
                                 // Sub-folder no longer in folder 1, delete from folder 2
                                 fileRepository2.DeleteFolder(subFolder2);
-                                _log.LogSyncAction("FOLDER_DELETED", "", "", subFolder2, "", null);
+                                _auditLog.LogAction("FOLDER_DELETED", "", "", subFolder2, "", null);
                             }
                             catch (System.Exception exception)
                             {
                                 folderStatistics.CountFolderErrors++;
-                                _log.LogSyncAction("FOLDER_DELETED_ERROR", "", "", subFolder2, "", exception);
+                                _auditLog.LogAction("FOLDER_DELETED_ERROR", "", "", subFolder2, "", exception);
                             }
                         }
                         itemsProcessedCount++;
@@ -831,7 +811,7 @@ namespace CFSyncFolders.Services
                         }
                         catch (System.Exception exception)
                         {
-                            _log.LogSyncAction("FOLDER_SYNC_ERROR", subFolder1, "", subFolder2, "", exception);
+                            _auditLog.LogAction("FOLDER_SYNC_ERROR", subFolder1, "", subFolder2, "", exception);
                             folderStatistics.CountFolderErrors++;
                         }
 

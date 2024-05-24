@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Dropbox.Api;
 using Dropbox.Api.Files;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 
 namespace CFSyncFolders.FileRepository
