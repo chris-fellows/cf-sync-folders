@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace CFSyncFolders.Interfaces
 {
     /// <summary>
-    /// Sync configuration service
+    /// Sync configuration service for managing SyncConfiguration instances
     /// </summary>
     public interface ISyncConfigurationService
     {

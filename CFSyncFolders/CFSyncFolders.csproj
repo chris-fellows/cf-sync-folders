@@ -178,7 +178,15 @@
   <ItemGroup>
     <Compile Include="FileRepository\AWSS3Repository.cs" />
     <Compile Include="FileRepository\DropboxRepository.cs" />
+    <Compile Include="Forms\PlaceholdersForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PlaceholdersForm.Designer.cs">
+      <DependentUpon>PlaceholdersForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Interfaces\IPlaceholderService.cs" />
     <Compile Include="Interfaces\ISyncConfigurationService.cs" />
+    <Compile Include="Models\Placeholder.cs" />
     <Compile Include="Services\FileRepositoryService.cs" />
     <Compile Include="Forms\FolderOptionsForm.cs">
       <SubType>Form</SubType>
@@ -209,6 +217,7 @@
     <Compile Include="Forms\SyncConfigurationForm.Designer.cs">
       <DependentUpon>SyncConfigurationForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Services\PlaceholderService.cs" />
     <Compile Include="Services\SyncConfigurationService.cs" />
     <Compile Include="Services\SyncFoldersService.cs" />
     <Compile Include="Program.cs" />
@@ -218,6 +227,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\PlaceholdersForm.resx">
+      <DependentUpon>PlaceholdersForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

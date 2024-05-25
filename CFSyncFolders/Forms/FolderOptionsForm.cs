@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 
 namespace CFSyncFolders.Forms
@@ -18,15 +19,18 @@ namespace CFSyncFolders.Forms
     {
         private SyncFoldersOptions _syncFolderOptionsOld;   // Update this on form closed
         private SyncFoldersOptions _syncFolderOptionsNew;
+        private readonly IPlaceholderService _placeholderService;
 
         public FolderOptionsForm()
         {
             InitializeComponent();
         }
 
-        public FolderOptionsForm(SyncFoldersOptions syncFoldersOptions)
+        public FolderOptionsForm(IPlaceholderService placeholderService, SyncFoldersOptions syncFoldersOptions)
         {
             InitializeComponent();
+
+            _placeholderService = placeholderService;
 
             _syncFolderOptionsOld = syncFoldersOptions;
             _syncFolderOptionsNew = (SyncFoldersOptions)_syncFolderOptionsOld.Clone();
@@ -99,6 +103,11 @@ namespace CFSyncFolders.Forms
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            new PlaceholdersForm(_placeholderService).ShowDialog();
         }
     }
 }

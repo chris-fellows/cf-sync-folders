@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 
 namespace CFSyncFolders.Forms
@@ -12,6 +13,7 @@ namespace CFSyncFolders.Forms
     /// </summary>
     public partial class SyncConfigurationForm : Form
     {
+        private readonly IPlaceholderService _placeholderService;
         private SyncConfiguration _syncConfigurationOld;    // Update this on form closed
         private SyncConfiguration _syncConfigurationNew;
 
@@ -20,9 +22,11 @@ namespace CFSyncFolders.Forms
             InitializeComponent();
         }
 
-        public SyncConfigurationForm(SyncConfiguration syncConfiguration)
+        public SyncConfigurationForm(IPlaceholderService placeholderService,  SyncConfiguration syncConfiguration)
         {
             InitializeComponent();
+
+            _placeholderService = placeholderService;
 
             _syncConfigurationOld = syncConfiguration;
             _syncConfigurationNew = (SyncConfiguration)syncConfiguration.Clone();
@@ -186,7 +190,7 @@ namespace CFSyncFolders.Forms
         /// <returns></returns>
         private bool EditSyncFoldersOptions(int gridRowIndex, SyncFoldersOptions syncFoldersOptions)
         {
-            var form = new FolderOptionsForm(syncFoldersOptions);
+            var form = new FolderOptionsForm(_placeholderService, syncFoldersOptions);
             if (form.ShowDialog() == DialogResult.OK)
             {
                 // Apply changes to UI

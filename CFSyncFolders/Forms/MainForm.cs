@@ -19,22 +19,29 @@ namespace CFSyncFolders.Forms
     {
         private Mutex _uiMutex = new Mutex();
         private SyncFoldersService _syncFoldersService = null;
+        private readonly IAuditLog _auditLog;
+        private readonly IPlaceholderService _placeholderService;
         private readonly ISyncConfigurationService _syncConfigurationService = null;
+        private List<string> _autoSyncConfigurationDescriptions = new List<string>();
+
         private BackgroundWorker _worker = null;
         private DateTime _timeMouseOverNotify = DateTime.Now.AddYears(-1);
         private bool _isTaskTray = false;
         private System.Timers.Timer _timer = null;
-        private bool _syncing = false;            
-        private List<string> _autoSyncConfigurationDescriptions = new List<string>();
+        private bool _syncing = false;                    
+
         private DateTime _timeLastUpdateStatus = DateTime.MinValue;
+        private DateTime _timeLastDeleteLogs = DateTime.MinValue;
         private Dictionary<string, DateTime> _timeLastGridUpdate = new Dictionary<string, DateTime>();
         
-        public MainForm(IAuditLog auditLog, ISyncConfigurationService syncConfigurationService)                        
-        {            
+        public MainForm(IAuditLog auditLog, IPlaceholderService placeholderService, ISyncConfigurationService syncConfigurationService)                        
+        {           
             InitializeComponent();
 
             Control.CheckForIllegalCrossThreadCalls = false;
 
+            _auditLog = auditLog;
+            _placeholderService = placeholderService;
             _syncConfigurationService = syncConfigurationService;
 
             // Allow single instance only
@@ -48,7 +55,7 @@ namespace CFSyncFolders.Forms
                 // Get path to executable
                 string currentFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);           
                 
-                _syncFoldersService = new SyncFoldersService(auditLog, _syncConfigurationService);
+                _syncFoldersService = new SyncFoldersService(auditLog, _placeholderService, _syncConfigurationService);
                 //_syncManager.OnDisplayStatus += _syncManager_OnDisplayStatus;
                 //_syncManager.OnFolderChecked += _syncManager_OnFolderChecked;
                 //_syncManager.OnSyncFolderProgress += _syncManager_OnSyncFolderProgress;
@@ -360,7 +367,7 @@ namespace CFSyncFolders.Forms
                 {
                     // Check each sync config
                     foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
-                    {                        
+                    {
                         // Run sync
                         RunSync(false, syncConfigurationDescription, true, false, false);
 
@@ -368,6 +375,22 @@ namespace CFSyncFolders.Forms
                         {
                             break;
                         }
+                    }
+
+                    // Clear logs
+                    try
+                    {
+                        var now = DateTime.Now;
+                        if (_timeLastDeleteLogs.AddDays(1) < now)
+                        {
+                            DisplayMessage("Clearing old logs");
+                            _timeLastDeleteLogs = now;
+                            _auditLog.DeleteBefore(now.Subtract(TimeSpan.FromDays(60)));
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        DisplayMessage($"Error clearing old logs: {exception.Message}");
                     }
                 }
             }
@@ -477,7 +500,7 @@ namespace CFSyncFolders.Forms
             }
             else
             {
-                DisplayMessage(string.Format("Sync not required for ", syncConfigurationDescription));
+                DisplayMessage(string.Format("Sync not required for {0}", syncConfigurationDescription));
             }
         }
         
@@ -592,7 +615,7 @@ namespace CFSyncFolders.Forms
         private void SelectSyncConfiguration(Guid id)
         {
             SyncConfiguration syncConfiguration = _syncConfigurationService.GetById(id);
-            syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
+            syncConfiguration.SetResolvedFolders(DateTime.UtcNow, _placeholderService);
             InitialiseFolderGrid(syncConfiguration);                   
         }
 
@@ -600,7 +623,7 @@ namespace CFSyncFolders.Forms
         {
             Guid syncConfigurationId = (Guid)tscbConfiguration.ComboBox.SelectedValue;
             SyncConfiguration syncConfiguration = _syncConfigurationService.GetById(syncConfigurationId);
-            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(syncConfiguration);
+            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
                 _syncConfigurationService.Update(syncConfiguration);
@@ -620,7 +643,7 @@ namespace CFSyncFolders.Forms
                 FoldersOptions = new List<SyncFoldersOptions>()
             };
 
-            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(syncConfiguration);
+            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
                 _syncConfigurationService.Add(syncConfiguration);

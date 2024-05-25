@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using CFSyncFolders.Interfaces;
+using System.Linq;
 
 namespace CFSyncFolders.Log
 {
@@ -28,31 +29,33 @@ namespace CFSyncFolders.Log
             public Exception Exception { get; set; }
         }
 
-        private string _logFile = "";  // May contain placeholders
+        private readonly Char _delimiter;
+        private readonly string _logFile = "";  // May contain placeholders
         private List<LogEntry> _logEntries = new List<LogEntry>();
         private DateTime _lastFlush = DateTime.MinValue;
+        private readonly IPlaceholderService _placeholderService;
 
-        public CSVAuditLogFile(string logFile)
+        public CSVAuditLogFile(Char delimiter, string logFile, IPlaceholderService placeholderService)
         {
-            _logFile = logFile;            
+            _delimiter = delimiter;
+            _logFile = logFile;
+            _placeholderService = placeholderService;
         }
 
         private string GetLogFile(DateTime dateTime)
         {
-            string logFile = _logFile.Replace("{date}", string.Format("{0}-{1}", dateTime.Month, dateTime.Year))
-                        .Replace("{user}", Environment.UserName)
-                        .Replace("{machine}", Environment.MachineName);
-            return logFile;  
+            return _placeholderService.GetWithPlaceholdersReplaced(_logFile,
+                                                new Dictionary<string, object>() { { "date", dateTime } });          
         }
         
         private void WriteHeaders(string logFile)
         {
             if (!String.IsNullOrEmpty(logFile))
-            {
-                Char delimiter = (Char)9;
+            {                
                 using (StreamWriter writer = new StreamWriter(logFile, true))
                 {
-                    writer.WriteLine(string.Format("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}{0}{8}", delimiter, "Time", "Machine", "Action", "Item1", "Item1Data", "Item2", "Item2Data", "Exception"));
+                    writer.WriteLine(string.Format("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}{0}{8}", _delimiter,
+                                        "Time", "Machine", "Action", "Item1", "Item1Data", "Item2", "Item2Data", "Exception"));
                     writer.Flush();
                     writer.Close();
                 }
@@ -60,9 +63,7 @@ namespace CFSyncFolders.Log
         }
 
         private void WriteInternal(IEnumerable<LogEntry> logEntries)
-        {
-            Char delimiter = (Char)9;
-
+        {            
             if (!String.IsNullOrEmpty(_logFile))
             {
                 string logFile = GetLogFile(DateTime.Now);
@@ -87,7 +88,7 @@ namespace CFSyncFolders.Log
                         {
                             foreach (var logEntry in logEntries)
                             {
-                                writer.WriteLine(string.Format("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}{0}{8}", delimiter, logEntry.Time, Environment.MachineName,
+                                writer.WriteLine(string.Format("{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}{7}{0}{8}", _delimiter, logEntry.Time, Environment.MachineName,
                                             logEntry.Action, logEntry.Item1, logEntry.ItemData1,
                                             logEntry.Item2, logEntry.ItemData2,
                                             (logEntry.Exception == null ? "" : logEntry.Exception.Message)));
@@ -112,20 +113,29 @@ namespace CFSyncFolders.Log
             }
         }
 
-        private void FlushLogIfRequired()
+        /// <summary>
+        /// Flushes log if forced, too many queued or time overdue
+        /// </summary>
+        /// <param name="force"></param>
+        private void FlushLogIfRequired(bool force)
         {
             TimeSpan flushFrequency = TimeSpan.FromSeconds(10);
-            if (_lastFlush.Add(flushFrequency) <= DateTime.UtcNow)
+            if (force || 
+                _logEntries.Count > 500 ||     // Too many log entries queued
+                _lastFlush.Add(flushFrequency) <= DateTime.UtcNow)  // Time overdue
             {
                 _lastFlush = DateTime.UtcNow;
 
-                // Get log entries
-                List<LogEntry> logEntries = new List<LogEntry>();
-                logEntries.AddRange(_logEntries);
-                _logEntries.Clear();
+                if (_logEntries.Any())
+                {
+                    // Get log entries
+                    var logEntries = new List<LogEntry>();
+                    logEntries.AddRange(_logEntries);
+                    _logEntries.Clear();
 
-                // Write to log
-                WriteInternal(logEntries);
+                    // Write to log
+                    WriteInternal(logEntries);
+                }
             }
         }
 
@@ -133,7 +143,7 @@ namespace CFSyncFolders.Log
         {
             if (String.IsNullOrEmpty(action))   // Bit of a hack, force flush log
             {
-                FlushLogIfRequired();
+                FlushLogIfRequired(true);
             }
             else
             {
@@ -150,13 +160,28 @@ namespace CFSyncFolders.Log
                 };
                 _logEntries.Add(logEntry);
 
-                FlushLogIfRequired();
+                FlushLogIfRequired(false);
             }
         }
 
-        //public void DeleteBefore(DateTimeOffset beforeDate)
-        //{            
-           
-        //}
+        public void DeleteBefore(DateTime dateTime)
+        {           
+            // Delete old logs until we get N consecutive days with no logs            
+            var countConsecutiveFailed = 0;
+            do
+            {
+                var logFile = GetLogFile(dateTime);
+                if (File.Exists(logFile))
+                {
+                    countConsecutiveFailed = 0;
+                    File.Delete(logFile);
+                }
+                else
+                {
+                    countConsecutiveFailed++;
+                }
+                dateTime = dateTime.AddDays(-1);
+            } while (countConsecutiveFailed < 30);
+        }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
+using CFSyncFolders.Interfaces;
 using CFSyncFolders.Services;
 
 namespace CFSyncFolders.Models
@@ -67,7 +68,7 @@ namespace CFSyncFolders.Models
         /// <summary>
         /// Sets the resolved folders, replaces placeholders.       
         /// </summary>
-        public void SetResolvedFolders(DateTime date)
+        public void SetResolvedFolders(DateTime date, IPlaceholderService placeholderService)
         {
             string verificationFile = "";   // Full path
             bool isVerificationDriveMissing = false;
@@ -106,8 +107,8 @@ namespace CFSyncFolders.Models
                 }
                 else
                 {
-                    syncFoldersOptions.Folder1Resolved = SyncFoldersService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder1, date, verificationFile);
-                    syncFoldersOptions.Folder2Resolved = SyncFoldersService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder2, date, verificationFile);
+                    syncFoldersOptions.Folder1Resolved = SyncFoldersService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder1, date, verificationFile, placeholderService);
+                    syncFoldersOptions.Folder2Resolved = SyncFoldersService.ReplacePlaceholdersInFolder(syncFoldersOptions.Folder2, date, verificationFile, placeholderService);
                 }
             }
         }

@@ -18,10 +18,10 @@ namespace CFSyncFolders.Interfaces
         /// <param name="exeption"></param>
         void LogAction(string action, string item1, string item1Data, string item2, string item2Data, Exception exeption);
 
-        ///// <summary>
-        ///// Deletes log entries before date
-        ///// </summary>
-        ///// <param name="beforeDate"></param>
-        //void DeleteBefore(DateTimeOffset beforeDate);
+        /// <summary>
+        /// Deletes logs before the date
+        /// </summary>
+        /// <param name="dateTime"></param>
+        void DeleteBefore(DateTime dateTime);
     }
 }

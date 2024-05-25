@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,36 +45,45 @@ namespace CFSyncFolders
         /// </summary>
         /// <returns></returns>
         static IHostBuilder CreateHostBuilder()
-        {
+        {            
             // Get path to executable
             string currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 
             return Host.CreateDefaultBuilder()
-                .ConfigureServices((context, services) => {                 
+                .ConfigureServices((context, services) => {
+                    services.AddTransient<IPlaceholderService, PlaceholderService>();
                     services.AddTransient<IAuditLog>((scope) =>
-                    {                        
+                    {
+                        var placeholderService = scope.GetRequiredService<IPlaceholderService>();
+                        var placeholderParameters = new Dictionary<string, object>()
+                        {
+                            { "date", DateTime.Now }
+                        };
+
                         // Get log file
                         var logsFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("LogsFolder").ToString();
                         if (logsFolder.Equals("{default}"))
                         {
                             logsFolder = Path.Combine(currentFolder, "Logs");
                         }
-                        logsFolder = logsFolder.Replace("{user}", Environment.UserName);
-                        logsFolder = logsFolder.Replace("{machine}", Environment.MachineName);
-                        
-                        return new CSVAuditLogFile(Path.Combine(logsFolder, "{date}"));
+                        logsFolder = placeholderService.GetWithPlaceholdersReplaced(logsFolder, placeholderParameters);                    
+                        return new CSVAuditLogFile((Char)9, Path.Combine(logsFolder, "{date:MM-yyyy}"), placeholderService);
                     });
                     services.AddTransient<ISyncConfigurationService>((scope) =>
                     {
+                        var placeholderService = scope.GetRequiredService<IPlaceholderService>();
+                        var placeholderParameters = new Dictionary<string, object>()
+                        {
+                            { "date", DateTime.Now }
+                        };
+
                         // Get data folder
                         var dataFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("DataFolder").ToString();
                         if (dataFolder.Equals("{default}"))
                         {
                             dataFolder = Path.Combine(currentFolder, "Configuration");
                         }
-                        dataFolder = dataFolder.Replace("{user}", Environment.UserName);
-                        dataFolder = dataFolder.Replace("{machine}", Environment.MachineName);
-
+                        dataFolder = placeholderService.GetWithPlaceholdersReplaced(dataFolder, placeholderParameters);                    
                         return new SyncConfigurationService(dataFolder);
                     });
                     services.AddTransient<MainForm>();

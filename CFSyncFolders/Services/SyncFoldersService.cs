@@ -22,7 +22,8 @@ namespace CFSyncFolders.Services
         }
 
         private bool _cancelled = false;    
-        private readonly IAuditLog _auditLog;       
+        private readonly IAuditLog _auditLog;
+        private readonly IPlaceholderService _placeholderService;
         private readonly ISyncConfigurationService _syncConfigurationService;
 
         private DateTime _lastProgressEvent = DateTime.UtcNow;
@@ -40,9 +41,11 @@ namespace CFSyncFolders.Services
                                 FolderStatistics folderStatistics, int folderLevel);
         public event SyncFolderProgress OnSyncFolderProgress;
         
-        public SyncFoldersService(IAuditLog auditLog, ISyncConfigurationService syncConfigurationService)
+        public SyncFoldersService(IAuditLog auditLog, IPlaceholderService placeholderService,
+                                ISyncConfigurationService syncConfigurationService)
         {            
             _auditLog = auditLog;
+            _placeholderService = placeholderService;
             _syncConfigurationService = syncConfigurationService;            
         }      
 
@@ -88,14 +91,22 @@ namespace CFSyncFolders.Services
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public static string ReplacePlaceholdersInFolder(string input, DateTime date, string verificationFile)
+        public static string ReplacePlaceholdersInFolder(string input, DateTime date, string verificationFile, IPlaceholderService placeholderService)
         {
-            var output = input.Replace("{date}", date.ToString("yyyy-MM-dd"));
+            var parameters = new Dictionary<string, object>()
+            {
+                { "date", date }
+            };
+            var output = placeholderService.GetWithPlaceholdersReplaced(input, parameters);
+
+            /*
+            var output = input.Replace("{date:yyyy-MM-dd}", date.ToString("yyyy-MM-dd"));
             output = output.Replace("{month}", date.Month.ToString());
             output = output.Replace("{day}", date.Day.ToString());
             output = output.Replace("{year}", date.Year.ToString());     
             output = output.Replace("{user_name}", Environment.UserName);
             output = output.Replace("{machine_name}", Environment.MachineName);
+            */
 
             // Replace verification file drive letter
             const string placeholder1 = "{verification_file_drive}";
@@ -252,11 +263,11 @@ namespace CFSyncFolders.Services
                                           IFileRepository fileRepository1, IFileRepository fileRepository2)
         {            
             // Replace placeholders in source & destination folders
-            syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
+            syncConfiguration.SetResolvedFolders(DateTime.UtcNow, _placeholderService);
 
             // Check if machine specific config
             if (!String.IsNullOrEmpty(syncConfiguration.Machine) && 
-                syncConfiguration.Machine.Equals(Environment.MachineName, StringComparison.InvariantCultureIgnoreCase))
+                !syncConfiguration.Machine.Equals(Environment.MachineName, StringComparison.InvariantCultureIgnoreCase))
             {
                 return $"Sync configuration is only valid for machine {syncConfiguration.Machine}";
             }
@@ -302,9 +313,9 @@ namespace CFSyncFolders.Services
                                 IFileRepository fileRepository1, IFileRepository fileRepository2)
         {
             _cancelled = false;
-
+            
             // Replace placeholders in source & destination folders
-            syncConfiguration.SetResolvedFolders(DateTime.UtcNow);
+            syncConfiguration.SetResolvedFolders(DateTime.UtcNow, _placeholderService);
 
             // Check if we can sync
             var message = CheckCanSyncFolders(syncConfiguration, ignoreLastStartTime, fileRepository1, fileRepository2);
