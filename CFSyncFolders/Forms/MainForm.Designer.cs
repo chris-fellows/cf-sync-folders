@@ -37,9 +37,9 @@
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             this.tscbConfiguration = new System.Windows.Forms.ToolStripComboBox();
             this.tsbSync = new System.Windows.Forms.ToolStripButton();
-            this.tsbViewLog = new System.Windows.Forms.ToolStripButton();
             this.tsbAddConfig = new System.Windows.Forms.ToolStripButton();
             this.tsbEditConfig = new System.Windows.Forms.ToolStripButton();
+            this.tsbViewLog = new System.Windows.Forms.ToolStripButton();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.dgvFolders = new System.Windows.Forms.DataGridView();
@@ -101,7 +101,7 @@
             // 
             this.tscbConfiguration.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.tscbConfiguration.Name = "tscbConfiguration";
-            this.tscbConfiguration.Size = new System.Drawing.Size(260, 25);
+            this.tscbConfiguration.Size = new System.Drawing.Size(280, 25);
             this.tscbConfiguration.SelectedIndexChanged += new System.EventHandler(this.tscbConfiguration_SelectedIndexChanged);
             // 
             // tsbSync
@@ -112,15 +112,6 @@
             this.tsbSync.Size = new System.Drawing.Size(52, 22);
             this.tsbSync.Text = "Sync";
             this.tsbSync.Click += new System.EventHandler(this.tsbSync_Click);
-            // 
-            // tsbViewLog
-            // 
-            this.tsbViewLog.Image = ((System.Drawing.Image)(resources.GetObject("tsbViewLog.Image")));
-            this.tsbViewLog.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbViewLog.Name = "tsbViewLog";
-            this.tsbViewLog.Size = new System.Drawing.Size(75, 22);
-            this.tsbViewLog.Text = "View Log";
-            this.tsbViewLog.Click += new System.EventHandler(this.tsbViewLog_Click);
             // 
             // tsbAddConfig
             // 
@@ -139,6 +130,15 @@
             this.tsbEditConfig.Size = new System.Drawing.Size(86, 22);
             this.tsbEditConfig.Text = "Edit Config";
             this.tsbEditConfig.Click += new System.EventHandler(this.tsbEditConfig_Click);
+            // 
+            // tsbViewLog
+            // 
+            this.tsbViewLog.Image = ((System.Drawing.Image)(resources.GetObject("tsbViewLog.Image")));
+            this.tsbViewLog.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbViewLog.Name = "tsbViewLog";
+            this.tsbViewLog.Size = new System.Drawing.Size(75, 22);
+            this.tsbViewLog.Text = "View Log";
+            this.tsbViewLog.Click += new System.EventHandler(this.tsbViewLog_Click);
             // 
             // tabControl1
             // 
@@ -159,7 +159,7 @@
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(980, 467);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Status";
+            this.tabPage1.Text = "Folders";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // dgvFolders
@@ -167,7 +167,6 @@
             this.dgvFolders.AllowUserToAddRows = false;
             this.dgvFolders.AllowUserToDeleteRows = false;
             this.dgvFolders.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvFolders.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvFolders.Location = new System.Drawing.Point(3, 3);
             this.dgvFolders.Name = "dgvFolders";
             this.dgvFolders.ReadOnly = true;
@@ -181,9 +180,9 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(921, 413);
+            this.tabPage2.Size = new System.Drawing.Size(980, 467);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Log";
+            this.tabPage2.Text = "Messages";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // lstMessage
@@ -192,7 +191,7 @@
             this.lstMessage.FormattingEnabled = true;
             this.lstMessage.Location = new System.Drawing.Point(3, 3);
             this.lstMessage.Name = "lstMessage";
-            this.lstMessage.Size = new System.Drawing.Size(915, 407);
+            this.lstMessage.Size = new System.Drawing.Size(974, 461);
             this.lstMessage.TabIndex = 0;
             // 
             // MainForm

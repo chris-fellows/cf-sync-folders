@@ -31,7 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PlaceholdersForm));
             this.dgvPlaceholders = new System.Windows.Forms.DataGridView();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.tsbClose = new System.Windows.Forms.ToolStripButton();
             this.tsbCancel = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPlaceholders)).BeginInit();
             this.toolStrip1.SuspendLayout();
@@ -49,21 +48,12 @@
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsbClose,
             this.tsbCancel});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(469, 25);
             this.toolStrip1.TabIndex = 12;
             this.toolStrip1.Text = "toolStrip1";
-            // 
-            // tsbClose
-            // 
-            this.tsbClose.Image = ((System.Drawing.Image)(resources.GetObject("tsbClose.Image")));
-            this.tsbClose.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbClose.Name = "tsbClose";
-            this.tsbClose.Size = new System.Drawing.Size(56, 22);
-            this.tsbClose.Text = "Close";
             // 
             // tsbCancel
             // 
@@ -72,6 +62,7 @@
             this.tsbCancel.Name = "tsbCancel";
             this.tsbCancel.Size = new System.Drawing.Size(63, 22);
             this.tsbCancel.Text = "Cancel";
+            this.tsbCancel.Click += new System.EventHandler(this.tsbCancel_Click);
             // 
             // PlaceholdersForm
             // 
@@ -95,7 +86,6 @@
 
         private System.Windows.Forms.DataGridView dgvPlaceholders;
         private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.ToolStripButton tsbClose;
         private System.Windows.Forms.ToolStripButton tsbCancel;
     }
 }

@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
+using System.Threading;
 
 namespace CFSyncFolders.Services
 {
@@ -21,10 +22,10 @@ namespace CFSyncFolders.Services
             Periodic = 2
         }
 
-        private bool _cancelled = false;    
+        //private bool _cancelled = false;    
         private readonly IAuditLog _auditLog;
         private readonly IPlaceholderService _placeholderService;
-        private readonly ISyncConfigurationService _syncConfigurationService;
+        private readonly ISyncConfigurationService _syncConfigurationService;        
 
         private DateTime _lastProgressEvent = DateTime.UtcNow;
         private DateTime _lastStatusEvent = DateTime.UtcNow;
@@ -32,18 +33,15 @@ namespace CFSyncFolders.Services
         private DateTime _lastPause = DateTime.UtcNow;
 
         public delegate void DisplayStatus(string status);
-        public event DisplayStatus OnDisplayStatus;
-
-        //public delegate void FolderChecked(string folder1);
-        //public event FolderChecked OnFolderChecked;
-
+        public event DisplayStatus OnDisplayStatus;     
+        
         public delegate void SyncFolderProgress(ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, string currentFolder,
                                 FolderStatistics folderStatistics, int folderLevel);
         public event SyncFolderProgress OnSyncFolderProgress;
         
         public SyncFoldersService(IAuditLog auditLog, IPlaceholderService placeholderService,
                                 ISyncConfigurationService syncConfigurationService)
-        {            
+        {                        
             _auditLog = auditLog;
             _placeholderService = placeholderService;
             _syncConfigurationService = syncConfigurationService;            
@@ -62,11 +60,11 @@ namespace CFSyncFolders.Services
             }
         }
         
-        public bool Cancelled
-        {
-            get { return _cancelled; }
-            set { _cancelled = value; }
-        }
+        //public bool Cancelled
+        //{
+        //    get { return _cancelled; }
+        //    set { _cancelled = value; }
+        //}
       
         private void DoDisplayStatus(string status, bool force)
         {
@@ -97,16 +95,7 @@ namespace CFSyncFolders.Services
             {
                 { "date", date }
             };
-            var output = placeholderService.GetWithPlaceholdersReplaced(input, parameters);
-
-            /*
-            var output = input.Replace("{date:yyyy-MM-dd}", date.ToString("yyyy-MM-dd"));
-            output = output.Replace("{month}", date.Month.ToString());
-            output = output.Replace("{day}", date.Day.ToString());
-            output = output.Replace("{year}", date.Year.ToString());     
-            output = output.Replace("{user_name}", Environment.UserName);
-            output = output.Replace("{machine_name}", Environment.MachineName);
-            */
+            var output = placeholderService.GetWithPlaceholdersReplaced(input, parameters);         
 
             // Replace verification file drive letter
             const string placeholder1 = "{verification_file_drive}";
@@ -310,10 +299,9 @@ namespace CFSyncFolders.Services
         /// <param name="folder1">Source folder</param>
         /// <param name="folder2">Destination folder</param>
         public void SyncFolders(SyncConfiguration syncConfiguration, bool ignoreLastStartTime,
-                                IFileRepository fileRepository1, IFileRepository fileRepository2)
-        {
-            _cancelled = false;
-            
+                                IFileRepository fileRepository1, IFileRepository fileRepository2,
+                                CancellationToken cancellationToken)
+        {                        
             // Replace placeholders in source & destination folders
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow, _placeholderService);
 
@@ -364,7 +352,8 @@ namespace CFSyncFolders.Services
                             SyncFoldersInternal(syncFoldersOptions, syncFoldersOptions,
                                                 fileRepository1, fileRepository2,
                                                 folderStatistics,
-                                                folderLevel);
+                                                folderLevel,
+                                                cancellationToken);
                             _auditLog.LogAction("SYNC_END", syncFoldersOptions.Folder1Resolved, "", syncFoldersOptions.Folder2Resolved, "", null);                         
                             //    mutex.WaitOne();
                             //    activeThreads--;
@@ -374,7 +363,7 @@ namespace CFSyncFolders.Services
                             //tasks.Add(task);
 
                             // Set completed time
-                            if (!_cancelled)
+                            if (!cancellationToken.IsCancellationRequested)
                             {
                                 syncFoldersOptions.TimeLastCompleted = DateTime.UtcNow;
                                 _syncConfigurationService.Update(syncConfiguration);
@@ -418,36 +407,36 @@ namespace CFSyncFolders.Services
             _auditLog.LogAction("", "", "", "", "", null);
         }
      
-        private static bool IsCanProcessFileExtension(FileInfo fileInfo, string[] includeFileExtensionList,
-                                        string[] excludeFileExtensionList)
-        {            
-            string extension = fileInfo.Extension;
+        //private static bool IsCanProcessFileExtension(FileInfo fileInfo, string[] includeFileExtensionList,
+        //                                string[] excludeFileExtensionList)
+        //{            
+        //    string extension = fileInfo.Extension;
 
-            // Check for specific included
-            if (includeFileExtensionList != null && includeFileExtensionList.Any())   // Include only specific extensions
-            {                
-                foreach (string currentExtension in includeFileExtensionList)
-                {
-                    if (currentExtension.Equals(extension, StringComparison.InvariantCultureIgnoreCase))   //Included
-                    {
-                        return true;
-                    }    
-                }
-                return false;
-            }
+        //    // Check for specific included
+        //    if (includeFileExtensionList != null && includeFileExtensionList.Any())   // Include only specific extensions
+        //    {                
+        //        foreach (string currentExtension in includeFileExtensionList)
+        //        {
+        //            if (currentExtension.Equals(extension, StringComparison.InvariantCultureIgnoreCase))   //Included
+        //            {
+        //                return true;
+        //            }    
+        //        }
+        //        return false;
+        //    }
 
-            if (excludeFileExtensionList != null && excludeFileExtensionList.Any())
-            {
-                foreach (string currentExtension in excludeFileExtensionList)
-                {
-                    if (currentExtension.Equals(extension, StringComparison.InvariantCultureIgnoreCase))    // Excluded
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+        //    if (excludeFileExtensionList != null && excludeFileExtensionList.Any())
+        //    {
+        //        foreach (string currentExtension in excludeFileExtensionList)
+        //        {
+        //            if (currentExtension.Equals(extension, StringComparison.InvariantCultureIgnoreCase))    // Excluded
+        //            {
+        //                return false;
+        //            }
+        //        }
+        //    }
+        //    return true;
+        //}
 
         private static bool IsCanProcessFileExtension(FileDetails fileDetails, string[] includeFileExtensionList,
                                         string[] excludeFileExtensionList)
@@ -554,9 +543,10 @@ namespace CFSyncFolders.Services
                                          IFileRepository fileRepository1,
                                          IFileRepository fileRepository2,
                                          FolderStatistics folderStatistics,
-                                         int folderLevel)
+                                         int folderLevel,
+                                         CancellationToken cancellationToken)
         {            
-            if (_cancelled)
+            if (cancellationToken.IsCancellationRequested)
             {
                 WriteDebug("Cancelled");
                 return;
@@ -601,14 +591,15 @@ namespace CFSyncFolders.Services
             }
 
             // Check if we need to sync these folders
-            if (!_cancelled && !IsFoldersTheSame(syncFoldersOptions.Folder1Resolved, fileRepository1, syncFoldersOptions.Folder2Resolved, fileRepository2))
+            if (!cancellationToken.IsCancellationRequested && 
+                    !IsFoldersTheSame(syncFoldersOptions.Folder1Resolved, fileRepository1, syncFoldersOptions.Folder2Resolved, fileRepository2))
             {
                 // Get file list
                 List<FileDetails> fileDetails1List = fileRepository1.GetFileDetailsList(syncFoldersOptions.Folder1Resolved);
                 List<FileDetails> fileDetails2List = fileRepository2.GetFileDetailsList(syncFoldersOptions.Folder2Resolved);
 
                 // Copy changes/new files from folder 1
-                if (!_cancelled)
+                if (!cancellationToken.IsCancellationRequested)
                 {                    
                     foreach (FileDetails fileDetails1 in fileDetails1List)
                     {
@@ -665,7 +656,7 @@ namespace CFSyncFolders.Services
                         itemsProcessedCount++;
                         PauseIfRequired(false);
 
-                        if (_cancelled)
+                        if (cancellationToken.IsCancellationRequested)
                         {
                             break;
                         }
@@ -682,7 +673,7 @@ namespace CFSyncFolders.Services
                 PauseIfRequired(false);
 
                 // Delete folder 2 files not in folder 1
-                if (!_cancelled && !syncFoldersOptions.KeepDeletedItems)
+                if (!cancellationToken.IsCancellationRequested && !syncFoldersOptions.KeepDeletedItems)
                 {
                     foreach (FileDetails fileDetails2 in fileDetails2List)
                     {
@@ -712,7 +703,7 @@ namespace CFSyncFolders.Services
                                 }
                                 PauseIfRequired(false);
                             }
-                            if (_cancelled)
+                            if (cancellationToken.IsCancellationRequested)
                             {
                                 break;
                             }
@@ -737,7 +728,7 @@ namespace CFSyncFolders.Services
                 //System.Windows.Forms.Application.DoEvents();
 
                 // Delete folder 2 sub-folders not in folder 1
-                if (!_cancelled && !syncFoldersOptions.KeepDeletedItems)
+                if (!cancellationToken.IsCancellationRequested && !syncFoldersOptions.KeepDeletedItems)
                 {
                     List<FolderDetails> subFolderDetails2List = fileRepository2.GetFolderDetailsList(syncFoldersOptions.Folder2Resolved);               
                     foreach (FolderDetails subFolderDetails2 in subFolderDetails2List)
@@ -765,7 +756,7 @@ namespace CFSyncFolders.Services
                         }
                         itemsProcessedCount++;
                         PauseIfRequired(false);
-                        if (_cancelled)
+                        if (cancellationToken.IsCancellationRequested)
                         {
                             break;
                         }
@@ -783,7 +774,7 @@ namespace CFSyncFolders.Services
                 PauseIfRequired(false);
 
                 // Sync sub-folders
-                if (!_cancelled)
+                if (!cancellationToken.IsCancellationRequested)
                 {
                     List<Task> tasks = new List<Task>();
 
@@ -815,7 +806,8 @@ namespace CFSyncFolders.Services
                             SyncFoldersInternal(rootSyncFoldersOptions, syncFoldersOptionsSub,
                                             fileRepository1, fileRepository2,
                                             folderStatistics,
-                                            folderLevel + 1);
+                                            folderLevel + 1,
+                                            cancellationToken);
                             itemsProcessedCount++;
                             PauseIfRequired(false);
                             
@@ -853,8 +845,17 @@ namespace CFSyncFolders.Services
                 DoDisplayStatus(string.Format("Checked {0}", syncFoldersOptions.Folder1Resolved), false);
             }           
             DoSyncFolderEvent(ProgressTypes.CompletedFolder, rootSyncFoldersOptions, syncFoldersOptions.Folder1Resolved, folderStatistics, folderLevel, (folderLevel == 1));            
-        }             
+        }
 
+        /// <summary>
+        /// Raises OnSyncFolderProgress if time overdue or forced
+        /// </summary>
+        /// <param name="progressType"></param>
+        /// <param name="syncFolderOptions"></param>
+        /// <param name="currentFolder"></param>
+        /// <param name="folderStatistics"></param>
+        /// <param name="folderLevel"></param>
+        /// <param name="force"></param>
         private void DoSyncFolderEvent(ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, string currentFolder,                        
                         FolderStatistics folderStatistics, int folderLevel,
                         bool force)

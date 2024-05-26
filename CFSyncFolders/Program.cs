@@ -30,6 +30,16 @@ namespace CFSyncFolders
         [STAThread]
         static void Main()
         {
+            /*
+            // Test placeholders
+            var placeholderService = new PlaceholderService();
+            var result = placeholderService.GetWithPlaceholdersReplaced("D:\\YYYY\\{date:yyyy-MM-dd}\\jj\\{special-folder:Desktop}\\JJJA\\{machine}",
+                        new Dictionary<string, object>()
+                        {
+                            { "date", DateTime.UtcNow }
+                        });
+            */
+
             var host = CreateHostBuilder().Build();
             ServiceProvider = host.Services;
 
@@ -37,7 +47,7 @@ namespace CFSyncFolders
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(ServiceProvider.GetRequiredService<MainForm>());
         }
-
+     
         public static IServiceProvider ServiceProvider { get; private set; }
 
         /// <summary>
@@ -45,45 +55,26 @@ namespace CFSyncFolders
         /// </summary>
         /// <returns></returns>
         static IHostBuilder CreateHostBuilder()
-        {            
-            // Get path to executable
-            string currentFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-
+        {                      
             return Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) => {
                     services.AddTransient<IPlaceholderService, PlaceholderService>();
                     services.AddTransient<IAuditLog>((scope) =>
                     {
-                        var placeholderService = scope.GetRequiredService<IPlaceholderService>();
-                        var placeholderParameters = new Dictionary<string, object>()
-                        {
-                            { "date", DateTime.Now }
-                        };
+                        var placeholderService = scope.GetRequiredService<IPlaceholderService>();                        
 
                         // Get log file
-                        var logsFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("LogsFolder").ToString();
-                        if (logsFolder.Equals("{default}"))
-                        {
-                            logsFolder = Path.Combine(currentFolder, "Logs");
-                        }
-                        logsFolder = placeholderService.GetWithPlaceholdersReplaced(logsFolder, placeholderParameters);                    
+                        var logsFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("LogsFolder").ToString();                        
+                        logsFolder = placeholderService.GetWithPlaceholdersReplaced(logsFolder, new Dictionary<string, object>());                    
                         return new CSVAuditLogFile((Char)9, Path.Combine(logsFolder, "{date:MM-yyyy}"), placeholderService);
                     });
                     services.AddTransient<ISyncConfigurationService>((scope) =>
                     {
                         var placeholderService = scope.GetRequiredService<IPlaceholderService>();
-                        var placeholderParameters = new Dictionary<string, object>()
-                        {
-                            { "date", DateTime.Now }
-                        };
 
                         // Get data folder
-                        var dataFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("DataFolder").ToString();
-                        if (dataFolder.Equals("{default}"))
-                        {
-                            dataFolder = Path.Combine(currentFolder, "Configuration");
-                        }
-                        dataFolder = placeholderService.GetWithPlaceholdersReplaced(dataFolder, placeholderParameters);                    
+                        var dataFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("DataFolder").ToString();                                           
+                        dataFolder = placeholderService.GetWithPlaceholdersReplaced(dataFolder, new Dictionary<string, object>());                    
                         return new SyncConfigurationService(dataFolder);
                     });
                     services.AddTransient<MainForm>();

@@ -4,13 +4,13 @@ using System.Collections.Generic;
 namespace CFSyncFolders.Models
 {
     /// <summary>
-    /// Placeholder that can appear in a string. E.g. "{machine}" would be replaced with the
-    /// current machine name.
+    /// Placeholder that can appear in a string. E.g. "{machine}", "{date:yyyy-MM-dd}"
     /// </summary>
     public class Placeholder
     {
         /// <summary>
-        /// Name. E.g. "{machine}"
+        /// Name. E.g. "{machine}", "{date:yyyy-MM-dd}". Anything after : is a parameter that will be used
+        /// by GetValue.
         /// </summary>
         public string Name { get; set; } = String.Empty;
 
@@ -20,8 +20,13 @@ namespace CFSyncFolders.Models
         public string Description { get; set; } = String.Empty;
 
         /// <summary>
-        /// Function that returns placeholder value. Optional parameters passed in.
+        /// Whether instance can handle replacing this placeholder
         /// </summary>
-        public Func<Dictionary<string, object>, string> GetValue { get; set; }
+        public Func<string, bool> CanGetValue { get; set; }
+
+        /// <summary>
+        /// Function that returns placeholder value
+        /// </summary>
+        public Func<string, Dictionary<string, object>, string> GetValue { get; set; }
     }
 }

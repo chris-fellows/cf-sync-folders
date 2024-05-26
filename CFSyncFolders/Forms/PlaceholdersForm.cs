@@ -2,12 +2,8 @@
 using CFSyncFolders.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CFSyncFolders.Forms
@@ -56,6 +52,12 @@ namespace CFSyncFolders.Forms
                     dgvPlaceholders.Rows.Add(row);
                 }
             }
+        }
+     
+        private void tsbCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
         }
     }
 }

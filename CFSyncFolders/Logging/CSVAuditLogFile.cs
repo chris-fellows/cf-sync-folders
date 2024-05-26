@@ -59,7 +59,7 @@ namespace CFSyncFolders.Log
                     writer.Flush();
                     writer.Close();
                 }
-            }
+            }            
         }
 
         private void WriteInternal(IEnumerable<LogEntry> logEntries)
@@ -121,7 +121,7 @@ namespace CFSyncFolders.Log
         {
             TimeSpan flushFrequency = TimeSpan.FromSeconds(10);
             if (force || 
-                _logEntries.Count > 500 ||     // Too many log entries queued
+                _logEntries.Count >= 500 ||      // Limit number of log entries stored in memory
                 _lastFlush.Add(flushFrequency) <= DateTime.UtcNow)  // Time overdue
             {
                 _lastFlush = DateTime.UtcNow;

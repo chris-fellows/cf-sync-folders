@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using System.Threading;
@@ -28,9 +27,9 @@ namespace CFSyncFolders.Forms
         private DateTime _timeMouseOverNotify = DateTime.Now.AddYears(-1);
         private bool _isTaskTray = false;
         private System.Timers.Timer _timer = null;
-        private bool _syncing = false;                    
-
-        private DateTime _timeLastUpdateStatus = DateTime.MinValue;
+        private bool _syncing = false;
+        private CancellationTokenSource _syncFoldersCancellationTokenSource = null;
+        
         private DateTime _timeLastDeleteLogs = DateTime.MinValue;
         private Dictionary<string, DateTime> _timeLastGridUpdate = new Dictionary<string, DateTime>();
         
@@ -55,10 +54,7 @@ namespace CFSyncFolders.Forms
                 // Get path to executable
                 string currentFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);           
                 
-                _syncFoldersService = new SyncFoldersService(auditLog, _placeholderService, _syncConfigurationService);
-                //_syncManager.OnDisplayStatus += _syncManager_OnDisplayStatus;
-                //_syncManager.OnFolderChecked += _syncManager_OnFolderChecked;
-                //_syncManager.OnSyncFolderProgress += _syncManager_OnSyncFolderProgress;
+                _syncFoldersService = new SyncFoldersService(auditLog, _placeholderService, _syncConfigurationService);              
 
                 // Handle OnDisplayStatus
                 _syncFoldersService.OnDisplayStatus += delegate (string status)
@@ -87,6 +83,7 @@ namespace CFSyncFolders.Forms
                     });
                 };
 
+                // Get all sync configurations
                 var syncConfigurations = _syncConfigurationService.GetAll();                
                 
                 // Load auto-sync configs
@@ -118,49 +115,21 @@ namespace CFSyncFolders.Forms
                 // Initialise folder grid                          
                 string defaultSyncDescription = _autoSyncConfigurationDescriptions.Count == 0 ? Environment.MachineName : _autoSyncConfigurationDescriptions.First();
                 var defaultSyncConfiguration = _syncConfigurationService.GetByDescription(defaultSyncDescription);
+                if (defaultSyncConfiguration == null)   // Default to first sync config
+                {
+                    defaultSyncConfiguration = syncConfigurations.FirstOrDefault();
+                }
                
                 RefreshSyncConfigurations(defaultSyncConfiguration.ID);
                
+                // Check run mode
                 if (Environment.GetCommandLineArgs().Contains("/Tray"))    // Run continuously in system tray
                 {
-                    if (!_autoSyncConfigurationDescriptions.Any())
-                    {
-                        throw new Exception("No sync configurations specified");
-                    }
-
-                    // Determine if auto sync is required
-                    bool isAutoSync = Environment.GetCommandLineArgs().Contains("/AutoSync");                  
-
-                    _isTaskTray = true;
-                    niNotify.Icon = SystemIcons.Application;    // new Icon(SystemIcons.Application);  //, 40, 40);
-                    niNotify.Text = "Sync Folders - Idle";
-                    WindowState = FormWindowState.Minimized;
-                    tsbSync.Enabled = !isAutoSync;
-                    tsbAddConfig.Visible = !isAutoSync;
-                    tsbEditConfig.Visible = !isAutoSync;
-
-                    _timer = new System.Timers.Timer();
-                    _timer.Elapsed += _timer_Elapsed;
-                    _timer.Interval = 10000 * 1;    // Run soon after launch
-                    _timer.Enabled = isAutoSync;
+                    RunInTray();                  
                 }
                 else if (Environment.GetCommandLineArgs().Contains("/Silent"))    // Run and shut down (Called from Windows scheduler)
                 {
-                    tsbAddConfig.Visible = false;
-                    tsbEditConfig.Visible = false;
-
-                    foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
-                    {
-                        bool isLast = syncConfigurationDescription == _autoSyncConfigurationDescriptions.Last();
-                        RunSync(false, syncConfigurationDescription, true, false, isLast);
-
-                        // If not last then wait for completion
-                        while (!isLast && _syncing)
-                        {
-                            System.Threading.Thread.Sleep(200);
-                            Application.DoEvents();
-                        }
-                    }
+                    RunSilent();
                 }
             }
             catch(System.Exception exception)
@@ -170,105 +139,138 @@ namespace CFSyncFolders.Forms
             }
         }
 
-        //private string GetLogFile()
-        //{     
-        //    string logFile = _logFile.Replace("{date}", string.Format("{0}-{1}", DateTime.Now.Month, DateTime.Now.Year));
-        //    //string logFile = string.Format(@"{ 0}\Logs\Log-{1}-{2}.txt", currentFolder, DateTime.Now.Month, DateTime.Now.Year);
-        //    return logFile;
-        //}
+        /// <summary>
+        /// Runs silently, process terminates after sync complete
+        /// </summary>
+        private void RunSilent()
+        {
+            tsbAddConfig.Visible = false;
+            tsbEditConfig.Visible = false;
 
+            foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
+            {
+                bool isLast = syncConfigurationDescription == _autoSyncConfigurationDescriptions.Last();
+                RunFolderSyncAsync(false, syncConfigurationDescription, true, false, isLast);
+
+                // If not last then wait for completion
+                while (!isLast && _syncing)
+                {
+                    System.Threading.Thread.Sleep(200);
+                    Application.DoEvents();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Runs in system tray
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        private void RunInTray()
+        {
+            if (!_autoSyncConfigurationDescriptions.Any())
+            {
+                throw new Exception("No sync configurations specified");
+            }
+
+            // Determine if auto sync is required
+            bool isAutoSync = Environment.GetCommandLineArgs().Contains("/AutoSync");
+
+            _isTaskTray = true;
+            niNotify.Icon = this.Icon;      // SystemIcons.Application doesn't work
+            niNotify.Text = "Sync Folders - Idle";
+            WindowState = FormWindowState.Minimized;
+            tsbSync.Enabled = !isAutoSync;
+            tsbAddConfig.Visible = !isAutoSync;
+            tsbEditConfig.Visible = !isAutoSync;
+
+            _timer = new System.Timers.Timer();
+            _timer.Elapsed += _timer_Elapsed;
+            _timer.Interval = 10000 * 1;    // Run soon after launch
+            _timer.Enabled = isAutoSync;
+        }
+
+        /// <summary>
+        /// Handles notification of folder sync progress so that we can updated the UI. Event indicates either starting folder,
+        /// completed folder or periodic update while processing folder.
+        /// </summary>
+        /// <param name="progressType"></param>
+        /// <param name="syncFolderOptions"></param>
+        /// <param name="folder1"></param>
+        /// <param name="folderStatistics"></param>
+        /// <param name="folderLevel"></param>
         private void EventOnSyncFolderProgress(SyncFoldersService.ProgressTypes progressType, SyncFoldersOptions syncFolderOptions, 
                                                 string folder1, FolderStatistics folderStatistics, int folderLevel)
         {
             DateTime currentTime = DateTime.UtcNow;
 
             // Update main status
-            TimeSpan timeSinceLastUpdateStatus = currentTime - _timeLastUpdateStatus;
+            //TimeSpan timeSinceLastUpdateStatus = currentTime - _timeLastUpdateStatus;
             if (folderLevel == 1)
             {
                 tssFolders.Text = string.Format("{0} {1}", (progressType == SyncFoldersService.ProgressTypes.CompletedFolder ? "Synchronised" : "Synchronising"), syncFolderOptions.Folder1Resolved);
                 statusStrip1.Refresh();
                 switch (progressType)
                 {
-                    case SyncFoldersService.ProgressTypes.StartingFolder: DisplayMessage(string.Format("Sychronising {0}", syncFolderOptions.Folder1Resolved)); break;
-                    case SyncFoldersService.ProgressTypes.CompletedFolder: DisplayMessage(string.Format("Synchronised {0}", syncFolderOptions.Folder1Resolved)); break;
+                    case SyncFoldersService.ProgressTypes.StartingFolder:
+                        DisplayMessage(string.Format("Sychronising {0}", syncFolderOptions.Folder1Resolved));
+                        break;
+                    case SyncFoldersService.ProgressTypes.CompletedFolder:
+                        DisplayMessage(string.Format("Synchronised {0}", syncFolderOptions.Folder1Resolved));
+                        break;
                 }
-                _timeLastUpdateStatus = currentTime;
-            }
-
-            //if (folderLevel > 4)    // Don't update grid for lower level folders
-            // {
-            //    return;
-            //}
-
-            // No need to check, Sync Manager only raises this event periodically
-            // Check if time to update grid, always update for top level folder
-            bool updateGrid = true;
-            /*
-            TimeSpan timeSinceLastUpdate = currentTime - _timeLastGridUpdate[syncFolderOptions.Folder1Resolved];
-            if (timeSinceLastUpdate.TotalMilliseconds >= 500 || folderLevel == 1)
+                //_timeLastUpdateStatus = currentTime;
+            }         
+            
+            bool waited = false;
+            _timeLastGridUpdate[syncFolderOptions.Folder1Resolved] = currentTime;
+            try
             {
-                updateGrid = true;
-            }
-            */
-
-            // Update grid
-            if (updateGrid)
-            {
-                bool waited = false;
-                _timeLastGridUpdate[syncFolderOptions.Folder1Resolved] = currentTime;
-                try
+                waited = _uiMutex.WaitOne();
+                foreach (DataGridViewRow row in dgvFolders.Rows)
                 {
-                    waited = _uiMutex.WaitOne();                    
-                    foreach (DataGridViewRow row in dgvFolders.Rows)
+                    if (row.Cells["Folder"].Value != null && row.Cells["Folder"].Value.ToString() == syncFolderOptions.Folder1Resolved)
                     {
-                        if (row.Cells["Folder"].Value != null && row.Cells["Folder"].Value.ToString() == syncFolderOptions.Folder1Resolved)
+                        try
                         {
-                            try
-                            {
-                                row.Cells["Last Completed"].Value = syncFolderOptions.TimeLastCompleted.ToString("dd/MM/yy HH:mm");
+                            row.Cells["Last Completed"].Value = syncFolderOptions.TimeLastCompleted.ToString("dd/MM/yy HH:mm");
 
-                                DateTime next = syncFolderOptions.TimeLastCompleted.AddSeconds(syncFolderOptions.FrequencySeconds);
-                                row.Cells["Next"].Value = next.ToString("dd/MM/yy HH:mm");
+                            DateTime next = syncFolderOptions.TimeLastCompleted.AddSeconds(syncFolderOptions.FrequencySeconds);
+                            row.Cells["Next"].Value = next.ToString("dd/MM/yy HH:mm");
 
-                                row.Cells["New Files"].Value = folderStatistics.CountFilesNew;
-                                row.Cells["Updated Files"].Value = folderStatistics.CountFilesUpdated;
-                                row.Cells["Deleted Files"].Value = folderStatistics.CountFilesDeleted;
-                                if (folderLevel == 1 && progressType == SyncFoldersService.ProgressTypes.CompletedFolder)   // Completed
-                                {
-                                    int errorCount = folderStatistics.CountFileErrors + folderStatistics.CountFolderErrors;
-                                    row.Cells["Status"].Value = errorCount == 0 ? "Completed" : string.Format("Completed ({0} errors)", errorCount);
-                                }
-                                else
-                                {
-                                    row.Cells["Status"].Value = folder1;
-                                }
-                                dgvFolders.InvalidateRow(row.Index);    // Repaint
-                            }
-                            catch
+                            row.Cells["New Files"].Value = folderStatistics.CountFilesNew;
+                            row.Cells["Updated Files"].Value = folderStatistics.CountFilesUpdated;
+                            row.Cells["Deleted Files"].Value = folderStatistics.CountFilesDeleted;
+                            if (folderLevel == 1 && progressType == SyncFoldersService.ProgressTypes.CompletedFolder)   // Completed
                             {
-                                throw;
+                                int errorCount = folderStatistics.CountFileErrors + folderStatistics.CountFolderErrors;
+                                row.Cells["Status"].Value = errorCount == 0 ? "Completed" : string.Format("Completed ({0} errors)", errorCount);
                             }
-                            break;
+                            else
+                            {
+                                row.Cells["Status"].Value = folder1;
+                            }
+                            dgvFolders.InvalidateRow(row.Index);    // Repaint
                         }
+                        catch
+                        {
+                            throw;
+                        }
+                        break;
                     }
+                }
 
-                    // Force UI update
-                    dgvFolders.Update();
-                    dgvFolders.Refresh();
-                }
-                catch
-                {
-                    // Ignore error
-                }
-                finally
-                {
-                    if (waited)
-                    {
-                        _uiMutex.ReleaseMutex();
-                    }
-                }
+                // Force UI update
+                dgvFolders.Update();
+                dgvFolders.Refresh();
             }
+            catch { }       // Ignore error, nothing that we can do
+            finally
+            {
+                if (waited)
+                {
+                    _uiMutex.ReleaseMutex();
+                }
+            }            
         }
        
         private void InitialiseFolderGrid(SyncConfiguration syncConfiguration)
@@ -369,7 +371,7 @@ namespace CFSyncFolders.Forms
                     foreach (var syncConfigurationDescription in _autoSyncConfigurationDescriptions)
                     {
                         // Run sync
-                        RunSync(false, syncConfigurationDescription, true, false, false);
+                        RunFolderSyncAsync(false, syncConfigurationDescription, true, false, false);
 
                         if (_syncing)   // Only one sync at a time
                         {
@@ -409,15 +411,16 @@ namespace CFSyncFolders.Forms
         //}       
 
         /// <summary>
-        /// Runs the sync. Only need to sync if overdue or if being forced
+        /// Starts the folder sync running asynchronously.
         /// </summary>
         /// <param name="interactive"></param>
         /// <param name="syncConfigurationDescription"></param>
         /// <param name="ignoreLastStartTime"></param>
         /// <param name="oneTime"></param>
-        private void RunSync(bool interactive, string syncConfigurationDescription, bool setInUI, bool ignoreLastStartTime, bool oneTime)
+        private void RunFolderSyncAsync(bool interactive, string syncConfigurationDescription, bool setInUI, bool ignoreLastStartTime, bool oneTime)
         {
             this.Visible = interactive;
+            _syncFoldersCancellationTokenSource = null;
 
             DisplayMessage(string.Format("Checking if sync needed for {0}", syncConfigurationDescription));
 
@@ -449,6 +452,7 @@ namespace CFSyncFolders.Forms
 
                     _worker = new BackgroundWorker();
                     _syncing = true;    // Set sync busy
+                    _syncFoldersCancellationTokenSource = new CancellationTokenSource();
 
                     // Define worker action
                     _worker.DoWork += new DoWorkEventHandler(
@@ -460,9 +464,9 @@ namespace CFSyncFolders.Forms
                         niNotify.Text = "Sync Folders - Busy";
                         tscbConfiguration.Enabled = false;    // Prevent change
                         _syncFoldersService.SyncFolders(syncConfiguration, ignoreLastStartTime,
-                                        fileRepository1, fileRepository2);
-                                        //FileRepositoryService.GetFolder1FileRepository(),
-                                        //FileRepositoryService.GetFolder2FileRepository());
+                                        fileRepository1, fileRepository2,
+                                        _syncFoldersCancellationTokenSource.Token);
+                                        
                     });
 
                     // Define worker completion action
@@ -474,13 +478,14 @@ namespace CFSyncFolders.Forms
                         niNotify.Text = "Sync Folders - Idle";
                         tssFolders.Text = "Ready";
                         tscbConfiguration.Enabled = true;
-                        DisplayStatus(_syncFoldersService.Cancelled ? "Cancelled" : "Completed");
+                        DisplayStatus(_syncFoldersCancellationTokenSource.IsCancellationRequested ? "Cancelled" : "Completed");
                         DisplayMessage("Completed sync");
                         if (args.Error != null)
                         {
                             DisplayMessage(string.Format("Sync error: {0} ({1})", args.Error.Message, args.Error.StackTrace));
                         }
                         _syncing = false;    // Set sync complete
+                        _syncFoldersCancellationTokenSource = null;
                         if (oneTime)
                         {
                             Environment.Exit(0);
@@ -513,7 +518,7 @@ namespace CFSyncFolders.Forms
 
         private void DisplayMessage(string message)
         {
-            while (lstMessage.Items.Count > 1000)
+            while (lstMessage.Items.Count > 500)
             {
                 lstMessage.Items.RemoveAt(0);
             }
@@ -585,11 +590,12 @@ namespace CFSyncFolders.Forms
                     var syncConfiguration = (SyncConfiguration)tscbConfiguration.SelectedItem;
                     if (MessageBox.Show(string.Format("Do you want to sync {0}?", syncConfiguration.Description), "Sync", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        RunSync(true, syncConfiguration.Description, false, true, false);
+                        RunFolderSyncAsync(true, syncConfiguration.Description, false, true, false);
                     }
                     break;
                 case "Cancel":
-                    _syncFoldersService.Cancelled = true;
+                    DisplayMessage("Cancelling folder sync");
+                    _syncFoldersCancellationTokenSource.Cancel();                    
                     break;
             }
         }
