@@ -1,22 +1,14 @@
 ﻿using CFSyncFolders.Models;
 using System;
-using System.Collections.Generic;
+using CFUtilities.Repository;
 
 namespace CFSyncFolders.Interfaces
 {
     /// <summary>
     /// Sync configuration service for managing SyncConfiguration instances
     /// </summary>
-    public interface ISyncConfigurationService
+    public interface ISyncConfigurationService : IItemRepository<SyncConfiguration, Guid>
     {
-        SyncConfiguration GetByDescription(string description);
 
-        SyncConfiguration GetById(Guid id);
-
-        List<SyncConfiguration> GetAll();
-
-        void Update(SyncConfiguration syncConfiguration);
-
-        void Add(SyncConfiguration syncConfiguration);
     }
 }

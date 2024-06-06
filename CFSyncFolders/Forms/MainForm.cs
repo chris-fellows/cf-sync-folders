@@ -114,7 +114,9 @@ namespace CFSyncFolders.Forms
 
                 // Initialise folder grid                          
                 string defaultSyncDescription = _autoSyncConfigurationDescriptions.Count == 0 ? Environment.MachineName : _autoSyncConfigurationDescriptions.First();
-                var defaultSyncConfiguration = _syncConfigurationService.GetByDescription(defaultSyncDescription);
+                var defaultSyncConfiguration = _syncConfigurationService.GetByFilter((config) => 
+                                config.Description.Equals(defaultSyncDescription, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+
                 if (defaultSyncConfiguration == null)   // Default to first sync config
                 {
                     defaultSyncConfiguration = syncConfigurations.FirstOrDefault();
@@ -429,8 +431,9 @@ namespace CFSyncFolders.Forms
             var fileRepository1 = fileRepositoryService.GetFileRepository(System.Configuration.ConfigurationSettings.AppSettings.Get("Folder1.FileRepositoryClass"));
             var fileRepository2 = fileRepositoryService.GetFileRepository(System.Configuration.ConfigurationSettings.AppSettings.Get("Folder2.FileRepositoryClass"));
 
-            // Load SyncConfigurarion                       
-            var syncConfiguration = _syncConfigurationService.GetByDescription(syncConfigurationDescription);
+            // Load SyncConfigurarion                                   
+            var syncConfiguration = _syncConfigurationService.GetByFilter((config) => 
+                                config.Description.Equals(syncConfigurationDescription, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
             // Check if there's any sync'ing to do
             if (syncConfiguration.GetFoldersThatNeedSync(ignoreLastStartTime).Any())
@@ -620,7 +623,7 @@ namespace CFSyncFolders.Forms
 
         private void SelectSyncConfiguration(Guid id)
         {
-            SyncConfiguration syncConfiguration = _syncConfigurationService.GetById(id);
+            SyncConfiguration syncConfiguration = _syncConfigurationService.GetByID(id);
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow, _placeholderService);
             InitialiseFolderGrid(syncConfiguration);                   
         }
@@ -628,7 +631,7 @@ namespace CFSyncFolders.Forms
         private void tsbEditConfig_Click(object sender, EventArgs e)
         {
             Guid syncConfigurationId = (Guid)tscbConfiguration.ComboBox.SelectedValue;
-            SyncConfiguration syncConfiguration = _syncConfigurationService.GetById(syncConfigurationId);
+            SyncConfiguration syncConfiguration = _syncConfigurationService.GetByID(syncConfigurationId);
             SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
@@ -652,7 +655,7 @@ namespace CFSyncFolders.Forms
             SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration);
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
-                _syncConfigurationService.Add(syncConfiguration);
+                _syncConfigurationService.Insert(syncConfiguration);
 
                 // Refresh list of sync configs, display first
                 RefreshSyncConfigurations(syncConfiguration.ID);               

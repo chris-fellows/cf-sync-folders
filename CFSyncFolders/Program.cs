@@ -55,7 +55,7 @@ namespace CFSyncFolders
         /// </summary>
         /// <returns></returns>
         static IHostBuilder CreateHostBuilder()
-        {                      
+        {            
             return Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) => {
                     services.AddTransient<IPlaceholderService, PlaceholderService>();
