@@ -1,6 +1,8 @@
 ﻿using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
 using CFSyncFolders.Services;
+using CFUtilities.Interfaces;
+using CFUtilities.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,7 +20,7 @@ namespace CFSyncFolders.Forms
     {
         private Mutex _uiMutex = new Mutex();
         private SyncFoldersService _syncFoldersService = null;
-        private readonly IAuditLog _auditLog;
+        private readonly ILogger _auditLog;
         private readonly IPlaceholderService _placeholderService;
         private readonly ISyncConfigurationService _syncConfigurationService = null;
         private List<string> _autoSyncConfigurationDescriptions = new List<string>();
@@ -33,7 +35,7 @@ namespace CFSyncFolders.Forms
         private DateTime _timeLastDeleteLogs = DateTime.MinValue;
         private Dictionary<string, DateTime> _timeLastGridUpdate = new Dictionary<string, DateTime>();
         
-        public MainForm(IAuditLog auditLog, IPlaceholderService placeholderService, ISyncConfigurationService syncConfigurationService)                        
+        public MainForm(ILogger auditLog, IPlaceholderService placeholderService, ISyncConfigurationService syncConfigurationService)                        
         {           
             InitializeComponent();
 
@@ -205,8 +207,7 @@ namespace CFSyncFolders.Forms
         {
             DateTime currentTime = DateTime.UtcNow;
 
-            // Update main status
-            //TimeSpan timeSinceLastUpdateStatus = currentTime - _timeLastUpdateStatus;
+            // Update main status            
             if (folderLevel == 1)
             {
                 tssFolders.Text = string.Format("{0} {1}", (progressType == SyncFoldersService.ProgressTypes.CompletedFolder ? "Synchronised" : "Synchronising"), syncFolderOptions.Folder1Resolved);
@@ -219,8 +220,7 @@ namespace CFSyncFolders.Forms
                     case SyncFoldersService.ProgressTypes.CompletedFolder:
                         DisplayMessage(string.Format("Synchronised {0}", syncFolderOptions.Folder1Resolved));
                         break;
-                }
-                //_timeLastUpdateStatus = currentTime;
+                }                
             }         
             
             bool waited = false;

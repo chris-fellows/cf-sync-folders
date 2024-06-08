@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
-using CFSyncFolders.Interfaces;
 using CFSyncFolders.Services;
+using CFUtilities.Interfaces;
 
 namespace CFSyncFolders.Models
 {

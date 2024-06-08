@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
+using CFUtilities.Interfaces;
 
 namespace CFSyncFolders.Forms
 {

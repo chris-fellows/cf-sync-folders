@@ -7,39 +7,20 @@ using Microsoft.Extensions.Hosting;
 using CFSyncFolders.Forms;
 using CFSyncFolders.Interfaces;
 using CFSyncFolders.Services;
-using CFSyncFolders.Log;
+using CFUtilities.Interfaces;
+using CFUtilities.Logging;
+using CFUtilities.Services;
 
 namespace CFSyncFolders
 {
     static class Program
-    {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        //[STAThread]
-        //static void Main()
-        //{
-        //    Application.EnableVisualStyles();
-        //    Application.SetCompatibleTextRenderingDefault(false);
-        //    Application.Run(new MainForm());
-        //}
-
+    {        
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
-        {
-            /*
-            // Test placeholders
-            var placeholderService = new PlaceholderService();
-            var result = placeholderService.GetWithPlaceholdersReplaced("D:\\YYYY\\{date:yyyy-MM-dd}\\jj\\{special-folder:Desktop}\\JJJA\\{machine}",
-                        new Dictionary<string, object>()
-                        {
-                            { "date", DateTime.UtcNow }
-                        });
-            */
-
+        {           
             var host = CreateHostBuilder().Build();
             ServiceProvider = host.Services;
 
@@ -59,14 +40,14 @@ namespace CFSyncFolders
             return Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) => {
                     services.AddTransient<IPlaceholderService, PlaceholderService>();
-                    services.AddTransient<IAuditLog>((scope) =>
+                    services.AddTransient<ILogger>((scope) =>
                     {
                         var placeholderService = scope.GetRequiredService<IPlaceholderService>();                        
 
                         // Get log file
                         var logsFolder = System.Configuration.ConfigurationSettings.AppSettings.Get("LogsFolder").ToString();                        
                         logsFolder = placeholderService.GetWithPlaceholdersReplaced(logsFolder, new Dictionary<string, object>());                    
-                        return new CSVAuditLogFile((Char)9, Path.Combine(logsFolder, "{date:MM-yyyy}"), placeholderService);
+                        return new CSVLogger((Char)9, Path.Combine(logsFolder, "{date:MM-yyyy}"), placeholderService);
                     });
                     services.AddTransient<ISyncConfigurationService>((scope) =>
                     {

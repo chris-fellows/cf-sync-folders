@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
-using CFSyncFolders.Interfaces;
 using CFSyncFolders.Models;
+using CFUtilities.Interfaces;
 
 namespace CFSyncFolders.Forms
 {

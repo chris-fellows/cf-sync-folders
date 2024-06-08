@@ -1,5 +1,5 @@
-﻿using CFSyncFolders.Interfaces;
-using CFSyncFolders.Models;
+﻿using CFUtilities.Interfaces;
+using CFUtilities.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;

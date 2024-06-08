@@ -184,9 +184,7 @@
     <Compile Include="Forms\PlaceholdersForm.Designer.cs">
       <DependentUpon>PlaceholdersForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Interfaces\IPlaceholderService.cs" />
     <Compile Include="Interfaces\ISyncConfigurationService.cs" />
-    <Compile Include="Models\Placeholder.cs" />
     <Compile Include="Services\FileRepositoryService.cs" />
     <Compile Include="Forms\FolderOptionsForm.cs">
       <SubType>Form</SubType>
@@ -195,7 +193,6 @@
       <DependentUpon>FolderOptionsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\FolderStatistics.cs" />
-    <Compile Include="Interfaces\IAuditLog.cs" />
     <Compile Include="Models\FileDetails.cs" />
     <Compile Include="FileRepository\LocalFileRepository.cs" />
     <Compile Include="Models\FolderDetails.cs" />
@@ -217,7 +214,6 @@
     <Compile Include="Forms\SyncConfigurationForm.Designer.cs">
       <DependentUpon>SyncConfigurationForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Services\PlaceholderService.cs" />
     <Compile Include="Services\SyncConfigurationService.cs" />
     <Compile Include="Services\SyncFoldersService.cs" />
     <Compile Include="Program.cs" />
