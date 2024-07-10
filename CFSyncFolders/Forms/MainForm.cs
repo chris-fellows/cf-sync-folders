@@ -195,7 +195,8 @@ namespace CFSyncFolders.Forms
 
         /// <summary>
         /// Handles notification of folder sync progress so that we can updated the UI. Event indicates either starting folder,
-        /// completed folder or periodic update while processing folder.
+        /// completed folder or periodic update while processing folder. This event is always called for the top level folders
+        /// but only periodically for lower level folders.
         /// </summary>
         /// <param name="progressType"></param>
         /// <param name="syncFolderOptions"></param>
@@ -210,7 +211,8 @@ namespace CFSyncFolders.Forms
             // Update main status            
             if (folderLevel == 1)
             {
-                tssFolders.Text = string.Format("{0} {1}", (progressType == SyncFoldersService.ProgressTypes.CompletedFolder ? "Synchronised" : "Synchronising"), syncFolderOptions.Folder1Resolved);
+                tssFolders.Text = string.Format("{0} {1}", (progressType == SyncFoldersService.ProgressTypes.CompletedFolder ? 
+                                    "Synchronised" : "Synchronising"), syncFolderOptions.Folder1Resolved);
                 statusStrip1.Refresh();
                 switch (progressType)
                 {
@@ -482,7 +484,7 @@ namespace CFSyncFolders.Forms
                         tssFolders.Text = "Ready";
                         tscbConfiguration.Enabled = true;
                         DisplayStatus(_syncFoldersCancellationTokenSource.IsCancellationRequested ? "Cancelled" : "Completed");
-                        DisplayMessage("Completed sync");
+                        DisplayMessage($"Completed sync {syncConfigurationDescription}");
                         if (args.Error != null)
                         {
                             DisplayMessage(string.Format("Sync error: {0} ({1})", args.Error.Message, args.Error.StackTrace));
@@ -499,16 +501,16 @@ namespace CFSyncFolders.Forms
                 }
                 else
                 {
-                    DisplayMessage(string.Format("Cannot sync {0}: {1}", syncConfigurationDescription, checkCanSyncMessage));
+                    DisplayMessage($"Cannot sync {syncConfigurationDescription}: {checkCanSyncMessage}");
                     if (interactive)
                     {
-                        MessageBox.Show(string.Format("Cannot sync {0}: {1}", syncConfigurationDescription, checkCanSyncMessage), "Cannot Sync");
+                        MessageBox.Show($"Cannot sync {syncConfigurationDescription}: {checkCanSyncMessage}", "Cannot Sync");
                     }
                 }
             }
             else
             {
-                DisplayMessage(string.Format("Sync not required for {0}", syncConfigurationDescription));
+                DisplayMessage($"Sync not required for {syncConfigurationDescription}");
             }
         }
         

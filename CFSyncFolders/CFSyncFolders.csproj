@@ -198,7 +198,6 @@
     <Compile Include="Models\FolderDetails.cs" />
     <Compile Include="FileRepository\GoogleDriveRepository.cs" />
     <Compile Include="Interfaces\IFileRepository.cs" />
-    <Compile Include="Logging\CSVAuditLogFile.cs" />
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

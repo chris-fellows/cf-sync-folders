@@ -66,12 +66,13 @@ namespace CFSyncFolders.Models
         }
 
         /// <summary>
-        /// Sets the resolved folders, replaces placeholders.       
+        /// Sets the resolved folders, replaces placeholders. If the folder contains the placeholder for the verification
+        /// file drive then it's only set if the file can be found on one of the drives.
         /// </summary>
         public void SetResolvedFolders(DateTime date, IPlaceholderService placeholderService)
         {
             string verificationFile = "";   // Full path
-            bool isVerificationDriveMissing = false;
+            bool isVerificationDriveMissing = false;            
 
             // Find verification file across all drives, not necessary if UNC path is specified  
             if (!String.IsNullOrEmpty(this.VerificationFile) && !this.VerificationFile.StartsWith("\\"))
@@ -87,20 +88,22 @@ namespace CFSyncFolders.Models
                 }
             }
 
+            // Set resolved folders replacing any placeholders (Verification file drive, machine name, date etc). If verification
+            // file not found then clear folder
             foreach(var syncFoldersOptions in this.FoldersOptions)
             {
-                if (isVerificationDriveMissing)
+                if (isVerificationDriveMissing)  // Drive not available (Removable?)
                 {
                     // Clear folder 1 if we couldn't define drive letter
                     syncFoldersOptions.Folder1Resolved = syncFoldersOptions.Folder1;                    
-                    if (syncFoldersOptions.Folder1.Contains("{verification_drive_letter}"))
+                    if (syncFoldersOptions.Folder1.Contains("{verification_file_drive}"))
                     {
                         syncFoldersOptions.Folder1Resolved = null;
                     }
 
                     // Clear folder 2 if we couldn't define drive letter
                     syncFoldersOptions.Folder2Resolved = syncFoldersOptions.Folder2;
-                    if (syncFoldersOptions.Folder2.Contains("{verification_drive_letter}"))
+                    if (syncFoldersOptions.Folder2.Contains("{verification_file_drive}"))
                     {
                         syncFoldersOptions.Folder2Resolved = null;
                     }

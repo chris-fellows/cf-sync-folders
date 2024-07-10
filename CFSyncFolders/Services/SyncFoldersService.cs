@@ -24,8 +24,7 @@ namespace CFSyncFolders.Services
             CompletedFolder = 1,
             Periodic = 2
         }
-
-        //private bool _cancelled = false;    
+        
         private readonly ILogger _auditLog;
         private readonly IPlaceholderService _placeholderService;
         private readonly ISyncConfigurationService _syncConfigurationService;        
@@ -80,12 +79,6 @@ namespace CFSyncFolders.Services
             };
         }
         
-        //public bool Cancelled
-        //{
-        //    get { return _cancelled; }
-        //    set { _cancelled = value; }
-        //}
-      
         private void DoDisplayStatus(string status, bool force)
         {
             if (OnDisplayStatus != null)
@@ -115,14 +108,17 @@ namespace CFSyncFolders.Services
             {
                 { "date", date }
             };
-            var output = placeholderService.GetWithPlaceholdersReplaced(input, parameters);         
+            var output = placeholderService.GetWithPlaceholdersReplaced(input, parameters);
 
-            // Replace verification file drive letter
+            // Replace verification file drive letter                       
             const string placeholder1 = "{verification_file_drive}";
-            string verificationFileDriveLetter = verificationFile.Substring(0, 2);
-            if (!String.IsNullOrEmpty(verificationFile) && input.Contains(placeholder1))
+            if (output.Contains(placeholder1))
             {
-                output = output.Replace(placeholder1, verificationFileDriveLetter);
+                string verificationFileDriveLetter = verificationFile.Substring(0, 2);
+                if (!String.IsNullOrEmpty(verificationFile) && input.Contains(placeholder1))
+                {
+                    output = output.Replace(placeholder1, verificationFileDriveLetter);
+                }
             }
 
             /* Not needed. Better to use verification file drive letter that label.
@@ -557,7 +553,7 @@ namespace CFSyncFolders.Services
         /// <param name="folder2">Destination folder (Folder that is modified)</param>
         /// <param name="includeFileExtensionList">Specific extensions to include</param>
         /// <param name="keepFileProperties">Whether to retain file properties (Timestamps etc)</param>
-        /// <param name="keepDeletedItems">Whether to keep items in folder2 when they're deleted from folder1</param>
+        /// <param name="keepDeletedItems">Whether to keep items in folder2 when they're deleted from folder1</param>        
         private void SyncFoldersInternal(SyncFoldersOptions rootSyncFoldersOptions,
                                          SyncFoldersOptions syncFoldersOptions,
                                          IFileRepository fileRepository1,
@@ -882,7 +878,7 @@ namespace CFSyncFolders.Services
         {
             if (OnSyncFolderProgress != null)
             {
-                TimeSpan frequency = TimeSpan.FromMilliseconds(500);
+                TimeSpan frequency = TimeSpan.FromMilliseconds(5000);
                 if (force || _lastProgressEvent.Add(frequency) <= DateTime.UtcNow)
                 {
                     _lastProgressEvent = DateTime.UtcNow;
