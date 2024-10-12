@@ -256,6 +256,11 @@ namespace CFSyncFolders.Forms
             txtMachine.Text = Environment.MachineName;
         }
 
+        private void btnAnyMachine_Click(object sender, EventArgs e)
+        {
+            txtMachine.Text = "";
+        }
+
         //private void tsbRemoveFolder_Click(object sender, EventArgs e)
         //{
         //    if (dgvFolder.SelectedCells.Count > 0)

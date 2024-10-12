@@ -30,6 +30,7 @@ namespace CFSyncFolders.Models
         /// Specific machine that config is valid for (null=Any). It is necessary for configs copying local 
         /// machine files (C:\*) to NAS. Each machine needs to only use the config for itself.
         /// </summary>
+        [XmlAttribute("Machine")]
         public string Machine { get; set; }
 
         [XmlArray("FoldersOptions")]

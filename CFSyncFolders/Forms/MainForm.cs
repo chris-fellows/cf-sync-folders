@@ -10,6 +10,7 @@ using System.Data;
 using System.Linq;
 using System.Windows.Forms;
 using System.Threading;
+using System.Text;
 
 namespace CFSyncFolders.Forms
 {
@@ -20,7 +21,7 @@ namespace CFSyncFolders.Forms
     {
         private Mutex _uiMutex = new Mutex();
         private SyncFoldersService _syncFoldersService = null;
-        private readonly ILogger _auditLog;
+        private readonly ILogger _auditLog;        
         private readonly IPlaceholderService _placeholderService;
         private readonly ISyncConfigurationService _syncConfigurationService = null;
         private List<string> _autoSyncConfigurationDescriptions = new List<string>();
@@ -33,15 +34,16 @@ namespace CFSyncFolders.Forms
         private CancellationTokenSource _syncFoldersCancellationTokenSource = null;
         
         private DateTime _timeLastDeleteLogs = DateTime.MinValue;
-        private Dictionary<string, DateTime> _timeLastGridUpdate = new Dictionary<string, DateTime>();
+        //private Dictionary<string, DateTime> _timeLastGridUpdate = new Dictionary<string, DateTime>();
         
-        public MainForm(ILogger auditLog, IPlaceholderService placeholderService, ISyncConfigurationService syncConfigurationService)                        
+        public MainForm(ILogger auditLog,
+                        IPlaceholderService placeholderService, ISyncConfigurationService syncConfigurationService)                        
         {           
             InitializeComponent();
 
             Control.CheckForIllegalCrossThreadCalls = false;
 
-            _auditLog = auditLog;
+            _auditLog = auditLog;            
             _placeholderService = placeholderService;
             _syncConfigurationService = syncConfigurationService;
 
@@ -49,7 +51,7 @@ namespace CFSyncFolders.Forms
             if (System.Diagnostics.Process.GetProcessesByName(System.Diagnostics.Process.GetCurrentProcess().ProcessName).Length > 1)
             {
                 Environment.Exit(0);
-            }
+            }           
 
             try
             {
@@ -95,7 +97,7 @@ namespace CFSyncFolders.Forms
                     {
                         var elements = arg.Split('=');
                         if (elements[1] == "*")   // All system configs
-                        {
+                        {                            
                             _autoSyncConfigurationDescriptions.AddRange(syncConfigurations.Select(sc => sc.Description).ToList());
                         }
                         else    // List of sync config descriptions
@@ -140,7 +142,7 @@ namespace CFSyncFolders.Forms
             {
                 MessageBox.Show(string.Format("Error starting application: {0}: {1}", exception.Message, exception.StackTrace), "Error");
                 throw;
-            }
+            }          
         }
 
         /// <summary>
@@ -226,7 +228,7 @@ namespace CFSyncFolders.Forms
             }         
             
             bool waited = false;
-            _timeLastGridUpdate[syncFolderOptions.Folder1Resolved] = currentTime;
+            //_timeLastGridUpdate[syncFolderOptions.Folder1] = currentTime;
             try
             {
                 waited = _uiMutex.WaitOne();
@@ -277,11 +279,17 @@ namespace CFSyncFolders.Forms
             }            
         }
        
-        private void InitialiseFolderGrid(SyncConfiguration syncConfiguration)
+        /// <summary>
+        /// Displays the sync config
+        /// </summary>
+        /// <param name="syncConfiguration"></param>
+        private void DisplaySyncConfig(SyncConfiguration syncConfiguration)
         {
-            _timeLastGridUpdate.Clear();
+            //_timeLastGridUpdate.Clear();
+
+            lblSyncConfigMachine.Text = String.IsNullOrEmpty(syncConfiguration.Machine) ? "Any" : syncConfiguration.Machine;
             
-            syncConfiguration.FoldersOptions.ForEach(syncFolderOptions => _timeLastGridUpdate.Add(syncFolderOptions.Folder1Resolved, DateTime.MinValue));
+            //syncConfiguration.FoldersOptions.ForEach(syncFolderOptions => _timeLastGridUpdate.Add(syncFolderOptions.Folder1, DateTime.MinValue));
 
             dgvFolders.Rows.Clear();
             dgvFolders.Columns.Clear();
@@ -315,7 +323,7 @@ namespace CFSyncFolders.Forms
                 {
                     using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
                     {
-                        cell.Value = syncFoldersOptions.Folder1Resolved;
+                        cell.Value = String.IsNullOrEmpty(syncFoldersOptions.Folder1Resolved) ? syncFoldersOptions.Folder1 : syncFoldersOptions.Folder1Resolved;
                         row.Cells.Add(cell);
                     }
                     using (DataGridViewTextBoxCell cell = new DataGridViewTextBoxCell())
@@ -499,14 +507,14 @@ namespace CFSyncFolders.Forms
 
                     _worker.RunWorkerAsync();
                 }
-                else
-                {
-                    DisplayMessage($"Cannot sync {syncConfigurationDescription}: {checkCanSyncMessage}");
-                    if (interactive)
-                    {
-                        MessageBox.Show($"Cannot sync {syncConfigurationDescription}: {checkCanSyncMessage}", "Cannot Sync");
-                    }
-                }
+                //else
+                //{
+                //    DisplayMessage($"Cannot sync {syncConfigurationDescription}: {checkCanSyncMessage}");
+                //    if (interactive)
+                //    {
+                //        MessageBox.Show($"Cannot sync {syncConfigurationDescription}: {checkCanSyncMessage}", "Cannot Sync");
+                //    }
+                //}
             }
             else
             {
@@ -607,15 +615,7 @@ namespace CFSyncFolders.Forms
 
         private void tsbViewLog_Click(object sender, EventArgs e)
         {
-            //string logFile = GetLogFile();
-            //if (System.IO.File.Exists(logFile))
-            //{
-            //    CFUtilities.IOUtilities.OpenFileWithDefaultApplication(logFile);                
-            //}
-            //else
-            //{
-            //    MessageBox.Show("Log file does not exist", "View Log");
-            //}
+            new LogForm(_auditLog).ShowDialog();
         }
 
         private void tscbConfiguration_SelectedIndexChanged(object sender, EventArgs e)
@@ -627,7 +627,7 @@ namespace CFSyncFolders.Forms
         {
             SyncConfiguration syncConfiguration = _syncConfigurationService.GetByID(id);
             syncConfiguration.SetResolvedFolders(DateTime.UtcNow, _placeholderService);
-            InitialiseFolderGrid(syncConfiguration);                   
+            DisplaySyncConfig(syncConfiguration);                   
         }
 
         private void tsbEditConfig_Click(object sender, EventArgs e)

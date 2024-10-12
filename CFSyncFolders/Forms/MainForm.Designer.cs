@@ -42,6 +42,8 @@
             this.tsbViewLog = new System.Windows.Forms.ToolStripButton();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.lblSyncConfigMachine = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.dgvFolders = new System.Windows.Forms.DataGridView();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.lstMessage = new System.Windows.Forms.ListBox();
@@ -153,6 +155,8 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.lblSyncConfigMachine);
+            this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.dgvFolders);
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
@@ -162,16 +166,34 @@
             this.tabPage1.Text = "Folders";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // lblSyncConfigMachine
+            // 
+            this.lblSyncConfigMachine.AutoSize = true;
+            this.lblSyncConfigMachine.Location = new System.Drawing.Point(64, 9);
+            this.lblSyncConfigMachine.Name = "lblSyncConfigMachine";
+            this.lblSyncConfigMachine.Size = new System.Drawing.Size(25, 13);
+            this.lblSyncConfigMachine.TabIndex = 14;
+            this.lblSyncConfigMachine.Text = "Any";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(7, 9);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(51, 13);
+            this.label1.TabIndex = 13;
+            this.label1.Text = "Machine:";
+            // 
             // dgvFolders
             // 
             this.dgvFolders.AllowUserToAddRows = false;
             this.dgvFolders.AllowUserToDeleteRows = false;
             this.dgvFolders.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvFolders.Location = new System.Drawing.Point(3, 3);
+            this.dgvFolders.Location = new System.Drawing.Point(3, 30);
             this.dgvFolders.Name = "dgvFolders";
             this.dgvFolders.ReadOnly = true;
             this.dgvFolders.RowHeadersVisible = false;
-            this.dgvFolders.Size = new System.Drawing.Size(974, 461);
+            this.dgvFolders.Size = new System.Drawing.Size(974, 434);
             this.dgvFolders.TabIndex = 11;
             // 
             // tabPage2
@@ -215,6 +237,7 @@
             this.toolStrip1.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFolders)).EndInit();
             this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -238,6 +261,8 @@
         private System.Windows.Forms.ToolStripButton tsbEditConfig;
         private System.Windows.Forms.ToolStripButton tsbAddConfig;
         private System.Windows.Forms.ToolStripStatusLabel tssFolders;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblSyncConfigMachine;
     }
 }
 

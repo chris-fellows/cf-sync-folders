@@ -31,6 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FolderOptionsForm));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsbClose = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.tsbCancel = new System.Windows.Forms.ToolStripButton();
             this.txtFolder1 = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -42,7 +43,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.nudSyncFrequencyMins = new System.Windows.Forms.NumericUpDown();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            this.label5 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudSyncFrequencyMins)).BeginInit();
             this.SuspendLayout();
@@ -67,6 +68,15 @@
             this.tsbClose.Size = new System.Drawing.Size(56, 22);
             this.tsbClose.Text = "Close";
             this.tsbClose.Click += new System.EventHandler(this.tsbClose_Click);
+            // 
+            // toolStripButton1
+            // 
+            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(122, 22);
+            this.toolStripButton1.Text = "View Placeholders";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // tsbCancel
             // 
@@ -181,20 +191,23 @@
             0,
             0});
             // 
-            // toolStripButton1
+            // label5
             // 
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(122, 22);
-            this.toolStripButton1.Text = "View Placeholders";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(12, 156);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(561, 13);
+            this.label5.TabIndex = 22;
+            this.label5.Text = "You can specify {verification_file_drive} for the source or destination folder if" +
+    " the drive letter is determined at sync time.";
             // 
             // FolderOptionsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(750, 154);
+            this.ClientSize = new System.Drawing.Size(750, 178);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.nudSyncFrequencyMins);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -235,5 +248,6 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NumericUpDown nudSyncFrequencyMins;
         private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.Label label5;
     }
 }

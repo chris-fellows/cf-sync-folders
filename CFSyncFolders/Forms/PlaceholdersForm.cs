@@ -12,8 +12,7 @@ namespace CFSyncFolders.Forms
     /// Displays list of placeholders
     /// </summary>
     public partial class PlaceholdersForm : Form
-    {
-        private readonly IPlaceholderService _placeholderService;
+    {        
         public PlaceholdersForm()
         {
             InitializeComponent();
@@ -22,8 +21,8 @@ namespace CFSyncFolders.Forms
         public PlaceholdersForm(IPlaceholderService placeholderService)
         {
             InitializeComponent();
-
-            ModelToView(_placeholderService.GetAll());
+            
+            ModelToView(placeholderService.GetAll());
         }
 
         private void ModelToView(IReadOnlyList<Placeholder> placeholders)
@@ -31,7 +30,9 @@ namespace CFSyncFolders.Forms
             dgvPlaceholders.Rows.Clear();
             dgvPlaceholders.Columns.Clear();
             var columnIndex = dgvPlaceholders.Columns.Add("Name", "Name");
+            dgvPlaceholders.Columns[columnIndex].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
             columnIndex = dgvPlaceholders.Columns.Add("Description", "Description");
+            dgvPlaceholders.Columns[columnIndex].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
             foreach (var placeholder in placeholders.OrderBy(p => p.Name))
             {
@@ -52,6 +53,8 @@ namespace CFSyncFolders.Forms
                     dgvPlaceholders.Rows.Add(row);
                 }
             }
+
+            dgvPlaceholders.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
         }
      
         private void tsbCancel_Click(object sender, EventArgs e)

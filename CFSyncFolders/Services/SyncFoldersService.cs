@@ -274,7 +274,7 @@ namespace CFSyncFolders.Services
             if (!String.IsNullOrEmpty(syncConfiguration.Machine) && 
                 !syncConfiguration.Machine.Equals(Environment.MachineName, StringComparison.InvariantCultureIgnoreCase))
             {
-                return $"Sync configuration is only valid for machine {syncConfiguration.Machine}";
+                return $"Sync configuration only valid for machine {syncConfiguration.Machine}";
             }
 
             // Check if we can sync all of these folders

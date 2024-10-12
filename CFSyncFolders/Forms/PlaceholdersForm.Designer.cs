@@ -38,11 +38,17 @@
             // 
             // dgvPlaceholders
             // 
+            this.dgvPlaceholders.AllowUserToAddRows = false;
+            this.dgvPlaceholders.AllowUserToDeleteRows = false;
+            this.dgvPlaceholders.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvPlaceholders.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvPlaceholders.Location = new System.Drawing.Point(0, 28);
             this.dgvPlaceholders.Name = "dgvPlaceholders";
             this.dgvPlaceholders.ReadOnly = true;
-            this.dgvPlaceholders.Size = new System.Drawing.Size(466, 238);
+            this.dgvPlaceholders.RowHeadersVisible = false;
+            this.dgvPlaceholders.Size = new System.Drawing.Size(502, 238);
             this.dgvPlaceholders.TabIndex = 0;
             // 
             // toolStrip1
@@ -51,7 +57,7 @@
             this.tsbCancel});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(469, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(502, 25);
             this.toolStrip1.TabIndex = 12;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -68,7 +74,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(469, 266);
+            this.ClientSize = new System.Drawing.Size(502, 266);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.dgvPlaceholders);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));

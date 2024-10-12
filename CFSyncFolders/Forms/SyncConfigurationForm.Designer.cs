@@ -41,6 +41,7 @@
             this.txtMachine = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.btnLocalMachine = new System.Windows.Forms.Button();
+            this.btnAnyMachine = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvFolder)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -57,7 +58,7 @@
             this.dgvFolder.Name = "dgvFolder";
             this.dgvFolder.ReadOnly = true;
             this.dgvFolder.RowHeadersVisible = false;
-            this.dgvFolder.Size = new System.Drawing.Size(913, 373);
+            this.dgvFolder.Size = new System.Drawing.Size(913, 376);
             this.dgvFolder.TabIndex = 9;
             this.dgvFolder.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 
@@ -158,11 +159,22 @@
             this.btnLocalMachine.UseVisualStyleBackColor = true;
             this.btnLocalMachine.Click += new System.EventHandler(this.btnLocalMachine_Click);
             // 
+            // btnAnyMachine
+            // 
+            this.btnAnyMachine.Location = new System.Drawing.Point(364, 79);
+            this.btnAnyMachine.Name = "btnAnyMachine";
+            this.btnAnyMachine.Size = new System.Drawing.Size(92, 23);
+            this.btnAnyMachine.TabIndex = 14;
+            this.btnAnyMachine.Text = "Any Machine";
+            this.btnAnyMachine.UseVisualStyleBackColor = true;
+            this.btnAnyMachine.Click += new System.EventHandler(this.btnAnyMachine_Click);
+            // 
             // SyncConfigurationForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(937, 490);
+            this.ClientSize = new System.Drawing.Size(937, 493);
+            this.Controls.Add(this.btnAnyMachine);
             this.Controls.Add(this.btnLocalMachine);
             this.Controls.Add(this.txtMachine);
             this.Controls.Add(this.label3);
@@ -200,5 +212,6 @@
         private System.Windows.Forms.TextBox txtMachine;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnLocalMachine;
+        private System.Windows.Forms.Button btnAnyMachine;
     }
 }
