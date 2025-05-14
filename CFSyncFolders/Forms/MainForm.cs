@@ -145,6 +145,14 @@ namespace CFSyncFolders.Forms
             }          
         }
 
+        private bool IsCanEditSyncConfig
+        {
+            get {
+                return !Environment.GetCommandLineArgs().Contains("/AutoSync") &&
+                    !Environment.GetCommandLineArgs().Contains("/Silent");
+            }
+        }
+
         /// <summary>
         /// Runs silently, process terminates after sync complete
         /// </summary>
@@ -186,8 +194,8 @@ namespace CFSyncFolders.Forms
             niNotify.Text = "Sync Folders - Idle";
             WindowState = FormWindowState.Minimized;
             tsbSync.Enabled = !isAutoSync;
-            tsbAddConfig.Visible = !isAutoSync;
-            tsbEditConfig.Visible = !isAutoSync;
+            tsbAddConfig.Visible = !isAutoSync;                        
+            tsbEditConfig.Text = IsCanEditSyncConfig ? "Edit Config" : "View Config"; 
 
             _timer = new System.Timers.Timer();
             _timer.Elapsed += _timer_Elapsed;
@@ -634,7 +642,10 @@ namespace CFSyncFolders.Forms
         {
             Guid syncConfigurationId = (Guid)tscbConfiguration.ComboBox.SelectedValue;
             SyncConfiguration syncConfiguration = _syncConfigurationService.GetByID(syncConfigurationId);
-            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration);
+            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration) 
+            { 
+                IsReadOnly = !IsCanEditSyncConfig
+            };            
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
                 _syncConfigurationService.Update(syncConfiguration);
@@ -654,7 +665,10 @@ namespace CFSyncFolders.Forms
                 FoldersOptions = new List<SyncFoldersOptions>()
             };
 
-            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration);
+            SyncConfigurationForm syncConfigurationForm = new SyncConfigurationForm(_placeholderService, syncConfiguration) 
+            {
+                IsReadOnly = !IsCanEditSyncConfig
+            };
             if (syncConfigurationForm.ShowDialog() == DialogResult.OK)
             {
                 _syncConfigurationService.Insert(syncConfiguration);

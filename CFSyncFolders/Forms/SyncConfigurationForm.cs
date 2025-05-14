@@ -16,10 +16,11 @@ namespace CFSyncFolders.Forms
         private readonly IPlaceholderService _placeholderService;
         private SyncConfiguration _syncConfigurationOld;    // Update this on form closed
         private SyncConfiguration _syncConfigurationNew;
+        private bool _isReadOnly = false;
 
         public SyncConfigurationForm()
         {
-            InitializeComponent();
+            InitializeComponent();            
         }
 
         public SyncConfigurationForm(IPlaceholderService placeholderService,  SyncConfiguration syncConfiguration)
@@ -32,6 +33,19 @@ namespace CFSyncFolders.Forms
             _syncConfigurationNew = (SyncConfiguration)syncConfiguration.Clone();
             ModelToView(_syncConfigurationNew);
         }      
+
+        public bool IsReadOnly
+        {
+            get { return _isReadOnly; }
+            set
+            {
+                _isReadOnly = value;
+                tsbAddFolder.Visible = !_isReadOnly;
+                tsbSave.Visible = !_isReadOnly;
+                btnAnyMachine.Visible = !_isReadOnly;
+                btnLocalMachine.Visible = !_isReadOnly;            
+            }
+        }
 
         private void ModelToView(SyncConfiguration syncConfiguration)
         {
@@ -140,12 +154,13 @@ namespace CFSyncFolders.Forms
             }
             using (DataGridViewButtonCell cell = new DataGridViewButtonCell())
             {
-                cell.Value = "Edit";                
+                cell.Value = _isReadOnly ? "View" : "Edit";                
                 row.Cells.Add(cell);
             }
             using (DataGridViewButtonCell cell = new DataGridViewButtonCell())
             {
                 cell.Value = "Remove";
+                cell.ReadOnly = _isReadOnly;
                 row.Cells.Add(cell);
             }
 
@@ -163,6 +178,7 @@ namespace CFSyncFolders.Forms
                 switch (cell.Value)
                 {
                     case "Edit":
+                    case "View":
                         EditSyncFoldersOptions(e.RowIndex, syncFoldersOptions);
                         break;
                     case "Remove":                        
@@ -190,7 +206,10 @@ namespace CFSyncFolders.Forms
         /// <returns></returns>
         private bool EditSyncFoldersOptions(int gridRowIndex, SyncFoldersOptions syncFoldersOptions)
         {
-            var form = new FolderOptionsForm(_placeholderService, syncFoldersOptions);
+            var form = new FolderOptionsForm(_placeholderService, syncFoldersOptions)
+            {
+                IsReadOnly = _isReadOnly
+            };
             if (form.ShowDialog() == DialogResult.OK)
             {
                 // Apply changes to UI

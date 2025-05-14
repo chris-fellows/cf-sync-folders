@@ -134,32 +134,7 @@ namespace CFSyncFolders.FileRepository
             }
 
             directoryInfo.Delete(true);
-        }
-
-        /// <summary>
-        /// Throws error if wrong destination folder. This is a sanity check to prevent potentially modifying
-        /// the source folder if the config is set up incorrectly.
-        /// </summary>
-        /// <param name="folder"></param>
-        /// <param name="file"></param>
-        private void ThrowErrorIfWrong(string folder, string file)
-        {
-            if (!String.IsNullOrEmpty(folder))
-            {
-                if (!folder.ToLower().Contains("CHRIS-".ToLower()))       // TODO: Change this
-                {
-                    throw new Exception("Invalid folder");
-                }
-            }
-
-            if (!String.IsNullOrEmpty(file))
-            {
-                if (!file.ToLower().Contains("CHRIS-".ToLower()))
-                {
-                    throw new Exception("Invalid file");
-                }
-            }                
-        }
+        }       
 
         public void WriteFile(string srcFilePath, string dstFilePath, bool copyProperties)
         {

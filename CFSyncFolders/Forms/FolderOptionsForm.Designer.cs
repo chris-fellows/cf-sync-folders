@@ -65,8 +65,8 @@
             this.tsbClose.Image = ((System.Drawing.Image)(resources.GetObject("tsbClose.Image")));
             this.tsbClose.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbClose.Name = "tsbClose";
-            this.tsbClose.Size = new System.Drawing.Size(56, 22);
-            this.tsbClose.Text = "Close";
+            this.tsbClose.Size = new System.Drawing.Size(51, 22);
+            this.tsbClose.Text = "Save";
             this.tsbClose.Click += new System.EventHandler(this.tsbClose_Click);
             // 
             // toolStripButton1

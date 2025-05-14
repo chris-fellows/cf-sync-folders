@@ -21,6 +21,7 @@ namespace CFSyncFolders.Forms
         private SyncFoldersOptions _syncFolderOptionsOld;   // Update this on form closed
         private SyncFoldersOptions _syncFolderOptionsNew;
         private readonly IPlaceholderService _placeholderService;
+        private bool _isReadOnly = false;
 
         public FolderOptionsForm()
         {
@@ -36,6 +37,16 @@ namespace CFSyncFolders.Forms
             _syncFolderOptionsOld = syncFoldersOptions;
             _syncFolderOptionsNew = (SyncFoldersOptions)_syncFolderOptionsOld.Clone();
             ModelToView(_syncFolderOptionsNew);
+        }
+
+        public bool IsReadOnly
+        {
+            get { return _isReadOnly; }
+            set
+            {                
+                _isReadOnly = value;
+                tsbClose.Visible = !_isReadOnly;                
+            }
         }
 
         private void ModelToView(SyncFoldersOptions syncFoldersOptions)

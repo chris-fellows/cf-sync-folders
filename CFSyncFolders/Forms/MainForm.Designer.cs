@@ -59,9 +59,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tssFolders});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 518);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 513);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(988, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(907, 22);
             this.statusStrip1.TabIndex = 7;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -89,7 +89,7 @@
             this.tsbViewLog});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(988, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(907, 25);
             this.toolStrip1.TabIndex = 9;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -150,7 +150,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 25);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(988, 493);
+            this.tabControl1.Size = new System.Drawing.Size(907, 488);
             this.tabControl1.TabIndex = 11;
             // 
             // tabPage1
@@ -161,7 +161,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(980, 467);
+            this.tabPage1.Size = new System.Drawing.Size(966, 473);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Folders";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -188,12 +188,15 @@
             // 
             this.dgvFolders.AllowUserToAddRows = false;
             this.dgvFolders.AllowUserToDeleteRows = false;
+            this.dgvFolders.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvFolders.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvFolders.Location = new System.Drawing.Point(3, 30);
             this.dgvFolders.Name = "dgvFolders";
             this.dgvFolders.ReadOnly = true;
             this.dgvFolders.RowHeadersVisible = false;
-            this.dgvFolders.Size = new System.Drawing.Size(974, 434);
+            this.dgvFolders.Size = new System.Drawing.Size(960, 440);
             this.dgvFolders.TabIndex = 11;
             // 
             // tabPage2
@@ -202,7 +205,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(980, 467);
+            this.tabPage2.Size = new System.Drawing.Size(899, 462);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Messages";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -213,14 +216,14 @@
             this.lstMessage.FormattingEnabled = true;
             this.lstMessage.Location = new System.Drawing.Point(3, 3);
             this.lstMessage.Name = "lstMessage";
-            this.lstMessage.Size = new System.Drawing.Size(974, 461);
+            this.lstMessage.Size = new System.Drawing.Size(893, 456);
             this.lstMessage.TabIndex = 0;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(988, 540);
+            this.ClientSize = new System.Drawing.Size(907, 535);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.statusStrip1);
